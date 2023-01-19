@@ -1,0 +1,3 @@
+oresat-olaf>=1.0.0
+build
+flake8
