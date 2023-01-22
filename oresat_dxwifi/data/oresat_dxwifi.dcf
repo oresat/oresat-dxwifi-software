@@ -38,7 +38,7 @@ LSS_Supported=0
 [DeviceComissioning]
 NodeID=76
 NodeName=DxWiFi
-Baudrate=1000
+BaudRate=1000
 NetNumber=0
 NetworkName=
 CANopenManager=0
