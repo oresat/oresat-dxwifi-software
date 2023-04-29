@@ -300,7 +300,7 @@ ParameterName=Manufacturer device name
 ObjectType=0x07
 DataType=0x0009
 AccessType=ro
-DefaultValue=OreSat Linux Generic
+DefaultValue=OreSat DxWiFi
 
 [1009]
 ParameterName=Manufacturer hardware version
@@ -3235,7 +3235,7 @@ ParameterName=Mapping object 1
 ObjectType=0x07
 DataType=0x0007
 AccessType=rw
-DefaultValue=0x00000000
+DefaultValue=0x60000008
 
 [1A02sub2]
 ParameterName=Mapping object 2
