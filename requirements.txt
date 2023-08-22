@@ -1,3 +1,4 @@
 build
 flake8
-oresat-olaf>=2.0.0
+numpy
+oresat-olaf>=2.2.0
