@@ -4200,7 +4200,7 @@ PDOMapping=1
 ParameterName=Temperature
 ObjectType=0x07
 DataType=0x0008
-AccessType=rw
+AccessType=ro
 
 [ManufacturerObjects]
 SupportedObjects=12
