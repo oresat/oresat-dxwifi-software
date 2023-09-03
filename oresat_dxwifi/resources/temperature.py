@@ -4,10 +4,8 @@
 #       The calculations are based on https://docs.google.com/document/d/16b_Qd6Pj2IAk5HQQl7JAP1T9Qd6QbKICMd-0swd9L6Y/edit
 #       The resource then sends the calculated temperature to the Object Directory upon resource start. An SDO read callback is also implemented
 
-from olaf.common.resource import Resource
-
-from numpy import log as ln
-from olaf.common.adc import Adc
+from olaf import Resource, Adc, logger
+import math as m
 
 class TemperatureResource(Resource):
     """Resource for getting the temperature of the NTC thermistor connected at AIN6"""
@@ -15,19 +13,22 @@ class TemperatureResource(Resource):
     # Olaf Constants ------------------------------------------------------------------------------
 
     TEMPERATURE_INDEX = 0x6001
-    MOCK_ADC = False # False = real world voltage, True = fake voltage, this constant is for testing
 
     # Resource Related ----------------------------------------------------------------------------
 
-    def __init__(self):
+    def __init__(self, adc_thermistor_pin = 6, is_mock_adc = False):
+        """Sets up the ADC. Determines which pin to use and whether the ADC is a real or mock ADC.
+
+        Args:
+            adc_thermistor_pin (int, optional): This is the pin where the resulting voltage is being read. Defaults to 6.
+            is_mock_adc (bool, optional): False = real world ADC, True = mock ADC for testing. Defaults to False.
+        """
         super().__init__()
         self.index = self.TEMPERATURE_INDEX
-        self.ADC = Adc(self.ADC_THERMISTOR_PIN, self.MOCK_ADC)
+        self.adc = Adc(adc_thermistor_pin, is_mock_adc)
 
     def on_start(self):
-        """Finds the temperature and sets the value in the Object dictionary. Sets up an SDO read callback"""
-        # Not sure if an initial set temperature value is necessary here, but I suppose it doesn't hurt
-        self.node.od[self.index].value = self.find_temperature()
+        """Sets up an SDO read callback"""
         self.node.add_sdo_read_callback(self.index, self.on_read)
 
     def on_read(self, index: int, subindex: int) -> float:
@@ -53,15 +54,12 @@ class TemperatureResource(Resource):
 
     # Thermistor values at specific standard temperature (25 C)
     T25= 298.15 # kelvin
-    R25 = 10000 # ohms
+    R25 = 10_000 # ohms
 
     B25 = 3435 # kelvin
 
     # This should be the same as the ADC_VIN value in the Adc class. This is the reference voltage
     ADC_VIN = 1.8 # volts
-
-    # This is the pin where the resulting voltage is being read
-    ADC_THERMISTOR_PIN = 6
 
     # Temperature Calulation Functions ------------------------------------------------------------
 
@@ -74,19 +72,15 @@ class TemperatureResource(Resource):
         temperature = None
         
         try:
-            voltage = self.retrieve_input_voltage()
+            voltage = self.adc.value
             resistance = self.calculate_resistance_from_voltage(voltage)
             temperature = self.calculate_temperature_from_resistance(resistance)
 
         except:
             # In theory this should be the only reason for an exception to occur in this situation
-            print("Unable to reach ADC")
+            logger.error("Unable to reach ADC")
 
         return temperature
-
-    def retrieve_input_voltage(self) -> float:
-        """Retrieves voltage at ADC input"""
-        return self.ADC.value
         
     def calculate_resistance_from_voltage(self,voltage) -> float:
         """Calculates the resistance based on the given voltage
@@ -110,7 +104,7 @@ class TemperatureResource(Resource):
             float: Temperature of the outside environment, in celsius
         """
         temperature_in_kelvin = 1 / ( 
-                            (ln(resistance/self.R25) / self.B25) 
+                            (m.log(resistance/self.R25) / self.B25) 
                             + (1 / self.T25)
                         )
 
