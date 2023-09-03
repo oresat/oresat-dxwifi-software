@@ -4,6 +4,7 @@ from olaf import olaf_setup, olaf_run, app
 
 from .resources.temperature import TemperatureResource
 
+
 def main():
 
     path = os.path.dirname(os.path.abspath(__file__))
