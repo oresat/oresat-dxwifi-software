@@ -59,14 +59,14 @@ class TemperatureResource(Resource):
 
     # Temperature Calculation Constants -----------------------------------------------------------
 
-    KELVIN_OFFSET = 273.15
+    KELVIN_OFFSET = 273.15  # Offset for converting from Kelvin to Celsius
 
     # Thermistor values at specific temperature (25 C)
-    T25 = 298.15  # kelvin
-    R25 = 10_000  # ohms
-    B25 = 3435  # kelvin
+    T25 = 298.15  # Temperature (Kelvin)
+    R25 = 10_000  # Resistance (Ohms)
+    B25 = 3435  # Beta (B) value (Kelvin)
 
-    # Temperature Calulation Functions ------------------------------------------------------------
+    # Temperature Calculation Functions -----------------------------------------------------------
 
     def find_temperature(self) -> float:
         """Retrieves ADC PIN voltage to calculate resistance and return temperature
