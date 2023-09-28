@@ -127,3 +127,22 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Camera Code: Object files
+*oresat_dxwifi/camera/.o
+*oresat_dxwifi/camera/.obj
+
+# Camera Code: Libraries
+*oresat_dxwifi/camera/.lib
+*oresat_dxwifi/camera/.a
+*oresat_dxwifi/camera/.so
+*oresat_dxwifi/camera/.so.*
+*oresat_dxwifi/camera/node_modules
+
+# Camera Code: Build Output
+*oresat_dxwifi/camera/bin/*
+*oresat_dxwifi/camera/build/*
+*oresat_dxwifi/camera/lib/*
+
+# Camera Code: Output from camera
+oresat_dxwifi/camera/data/*
