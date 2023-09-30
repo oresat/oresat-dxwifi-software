@@ -1,107 +1,206 @@
 # Imports
 import os
-import sys
-import time
 import shutil
-import argparse
 import subprocess
 
-# Make or overwrite the given directory
-def fresh_dir(path):
+from olaf import logger
 
-    # Overwrite
-    if os.path.exists(path):
-        for f in os.listdir(path):
-            p = os.path.join(path, f)
-            try:
-                shutil.rmtree(p)
-                print("Removed directory: {}".format(f))
-            except OSError:
-                os.remove(p)
-                print("Removed file: {}".format(f))
-        print("Cleaned Directory: {}".format(path))
-    else:
-        # Make
-        os.mkdir(path)
-        print("Created new directory: {}".format(path))
 
-# Main script
+class CameraInterfaceError(Exception):
+    """An error has occured with the camera interface"""
+
+
+class CameraInterface:
+    def __init__(
+        self,
+        spv: int,
+        duration: int,
+        image_output: str,
+        video_output: str,
+        binary: str = "./bin/capture",
+        device: str = "/dev/v4l/by-id/usb-Empia._USB_Camera_SN202106-video-index0",
+        video_x: int = 640,
+        video_y: int = 480,
+        fps: int = 4,
+        br: int = 100,
+        frames_del: bool = False,
+    ):
+        """Captures and encodes low-fps videos
+
+        Args:
+            spv: Seconds per created video. Must divide total duration.
+            duration: Total capture duration, in seconds.
+            image_output: Directory where raw frames should be stored (will overwrite).
+            video_output: Directory where output videos should be stored (will overwrite).
+            binary: Path to imagecapture binary.
+            device: Path to video device.
+            video_x: Horizontal resolution of video.
+            video_y: Vertical resolution of video.
+            fps: Desired frames per second. (Note: this will probably only work at or under 10fps).
+            br: Bit rate of H.264 encoded videos.
+            frames_del: Delete the raw frames after completion.
+        """
+        self.seconds_per_video = spv
+        self.total_duration = duration
+
+        self.image_output_directory = image_output
+        self.video_output_directory = video_output
+
+        self.camera_binary_path = binary
+        self.device_path = device
+
+        self.x_resolution = video_x
+        self.y_resolution = video_y
+        self.frames_per_second = fps
+        self.bit_rate = br
+
+        self.are_frames_deleted = frames_del
+
+        # Interpolate constant ffmpeg arguments
+        self.FFMPEG_CONSTANTS = (
+            "-c:v libx264 -b:v {}k -preset ultrafast -loglevel quiet -an -y".format(
+                self.bit_rate
+            )
+        )
+
+    def _check_seconds_per_video(self) -> bool:
+        """Returns whether seconds per video divides into the total duration"""
+        is_valid = True
+        if self.total_duration % self.seconds_per_video != 0:
+            is_valid = False
+        return is_valid
+
+    @staticmethod
+    def _fresh_dir(path) -> None:
+        # Overwrite
+        if os.path.exists(path):
+            for f in os.listdir(path):
+                p = os.path.join(path, f)
+                try:
+                    shutil.rmtree(p)
+                    logger.info("Removed directory: {}".format(f))
+                except OSError:
+                    os.remove(p)
+                    logger.info("Removed file: {}".format(f))
+            logger.info("Cleaned Directory: {}".format(path))
+        else:
+            # Make
+            os.mkdir(path)
+            logger.info("Created new directory: {}".format(path))
+
+    def _delete_frames(self) -> None:
+        """If frame delete variable is true, deletes frames in image output directory"""
+        if self.are_frames_deleted:
+            shutil.rmtree(self.image_output_directory)
+            logger.info("Deleted raw frames at: {}".format(self.image_output_directory))
+
+    def create_videos(self) -> None:
+        """Captures and encodes videos
+
+        Raises:
+            CameraInterfaceError: "Seconds per video does not evenly divide video duration".
+            CameraInterfaceError (directory_error): Something went wrong with directory clearing
+            CameraInterfaceError (capture_error): Something went wrong with capture or encoding
+        """
+        if not self._check_seconds_per_video():
+            raise CameraInterfaceError(
+                "Seconds per video does not evenly divide video duration"
+            )
+
+        try:
+            self._fresh_dir(self.image_output_directory)
+            self._fresh_dir(self.video_output_directory)
+        except Exception as directory_error:
+            raise CameraInterfaceError(directory_error)
+
+        try:
+            # Figure out how many times to loop
+            num_loops = self.total_duration // self.seconds_per_video
+
+            # Use a list to keep track of asynchronous ffmpeg calls
+            procs = []
+
+            # Make videos
+            for i in range(num_loops):
+                # Create strings
+                img_dir = os.path.join(self.image_output_directory, "{:04d}".format(i))
+                vid_name = os.path.join(
+                    self.video_output_directory, "output{:04d}.mp4".format(i)
+                )
+
+                # Make directory for frames
+                os.mkdir(img_dir)
+
+                # Make commands
+                capture_command = "{} {} {} {} {} {} {}".format(
+                    self.camera_binary_path,
+                    self.device_path,
+                    self.x_resolution,
+                    self.y_resolution,
+                    self.frames_per_second,
+                    self.seconds_per_video,
+                    img_dir,
+                )
+                ffmpeg_command = "ffmpeg -framerate {} -i {} {} {}".format(
+                    self.frames_per_second,
+                    os.path.join(img_dir, "frame%04d.ppm"),
+                    self.FFMPEG_CONSTANTS,
+                    vid_name,
+                )
+
+                # Call capture (blocking)
+                logger.info("Capturing frames for video {} of {}.".format(i + 1, num_loops))
+                subprocess.call(capture_command.split())
+
+                # Call ffmpeg (non-blocking)
+                logger.info("Starting encoding of video {} of {}.".format(i + 1, num_loops))
+                procs.append(subprocess.Popen(ffmpeg_command.split()))
+
+            # Wait for encoding to finish
+            logger.info("Waiting for encoding subprocesses to finish.")
+            [p.wait() for p in procs]
+            logger.info(
+                "Finished, videos available at: {}".format(self.video_output_directory)
+            )
+
+            self._delete_frames()
+        except Exception as capture_error:
+            raise CameraInterfaceError(capture_error)
+
+
 if __name__ == "__main__":
+    # Example
 
-    # Set up argument parser
-    # TODO: add complete sanity checks on user input
-    parser = argparse.ArgumentParser(description = "Capture and encode low-fps videos.")
-    parser.add_argument("-bin", "--binary", default = "./build/capture",
-                        help = "Path to imagecapture binary.")
-    parser.add_argument("-dev", "--device", default = "/dev/v4l/by-id/usb-Empia._UVC_Video_Device_12345678901234567890-video-index0",
-                        help = "Path to video device.")
-    parser.add_argument("-vx", "--video-x", type = int, default = 640,
-                        help = "Horizontal resolution of video.")
-    parser.add_argument("-vy", "--video-y", type = int, default = 480,
-                        help = "Vertical resolution of video.")
-    parser.add_argument("-fps", "--frames-per-second", dest = "fps", type = int, default = 4,
-                        help = "Desired frames per second. (Note: this will probably only work at or under 10fps.)")
-    parser.add_argument("-spv", "--seconds-per-video", dest = "spv", type = int, default = 3,
-                        help = "Seconds per created video. Must divide total duration.")
-    parser.add_argument("-br", "--bit-rate", type = int, default = 100,
-                        help = "Bit rate of H.264 encoded videos.")
-    parser.add_argument("-t", "--total-duration", type = int, required = True,
-                        help = "Total capture duration, in seconds.")
-    parser.add_argument("-io", "--image-output", required = True,
-                        help = "Directory where raw frames should be stored. (Will create / overwrite.)")
-    parser.add_argument("-vo", "--video-output", required = True,
-                        help = "Directory where output videos should be stored. (Will create / overwrite.)")
-    parser.add_argument("-del", "--delete-frames", default = False, action = "store_true",
-                        help = "Delete the raw frames after completion.")
+    SPV = 3  # Should evenly divide into duration
+    DURATION = 6
+    IMAGE_OUPUT_DIRECTORY = "oresat_dxwifi/camera/data/"
+    VIDEO_OUTPUT_DIRECTORY = "oresat_dxwifi/camera/data/"
 
-    # Parse arguments
-    args = parser.parse_args()
+    C_BINARY_PATH = "oresat_dxwifi/camera/bin/capture"
+    DEVICE_PATH = "/dev/v4l/by-id/usb-Empia._USB_Camera_SN202106-video-index0"
+    X_PIXEL_RESOLUTION = 640
+    Y_PIXEL_RESOLUTION = 480
+    FPS = 10
 
-    # Basic check -- make sure seconds per video divides total duration
-    if args.total_duration % args.spv != 0:
-        sys.exit("Seconds per video does not divide total duration.")
+    BR = 100
 
-    # Make / overwrite directories
-    fresh_dir(args.image_output)
-    fresh_dir(args.video_output)
+    ARE_FRAMES_DELETED = False
 
-    # Figure out how many times to loop
-    num_loops = args.total_duration // args.spv
+    cam_interface = CameraInterface(
+        SPV,
+        DURATION,
+        IMAGE_OUPUT_DIRECTORY,
+        VIDEO_OUTPUT_DIRECTORY,
+        C_BINARY_PATH,
+        DEVICE_PATH,
+        X_PIXEL_RESOLUTION,
+        Y_PIXEL_RESOLUTION,
+        FPS,
+        BR,
+        ARE_FRAMES_DELETED,
+    )
 
-    # Interpolate constant ffmpeg arguments
-    ffmpeg_constants = "-c:v libx264 -b:v {}k -preset ultrafast -loglevel quiet -an -y".format(args.bit_rate)
-
-    # Use a list to keep track of asynchronous ffmpeg calls
-    procs = []
-
-    # Make videos
-    for i in range(num_loops):
-
-        # Create strings
-        img_dir = os.path.join(args.image_output, "{:04d}".format(i))
-        vid_name = os.path.join(args.video_output, "output{:04d}.mp4".format(i))
-
-        # Make directory for frames
-        os.mkdir(img_dir)
-
-        # Make commands
-        capture_command = "{} {} {} {} {} {} {}".format(args.binary, args.device, args.video_x, args.video_y, args.fps, args.spv, img_dir)
-        ffmpeg_command = "ffmpeg -framerate {} -i {} {} {}".format(args.fps, os.path.join(img_dir, 'frame%04d.ppm'), ffmpeg_constants, vid_name)
-
-        # Call capture (blocking)
-        print("Capturing frames for video {} of {}.".format(i + 1, num_loops))
-        subprocess.call(capture_command.split())
-
-        # Call ffmpeg (non-blocking)
-        print("Starting encoding of video {} of {}.".format(i + 1, num_loops))
-        procs.append(subprocess.Popen(ffmpeg_command.split()))
-
-    # Wait for encoding to finish
-    print("Waiting for encoding subprocesses to finish.")
-    return_codes = [p.wait() for p in procs]
-    print("Finished, videos available at: {}".format(args.video_output))
-
-    # If requested, delete frames
-    if args.delete_frames:
-        shutil.rmtree(args.image_output)
-        print("Deleted raw frames at: {}".format(args.image_output))
+    try:
+        cam_interface.create_videos()
+    except Exception as error:
+        logger.error(error)
