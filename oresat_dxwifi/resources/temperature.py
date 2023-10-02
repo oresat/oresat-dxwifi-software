@@ -7,8 +7,9 @@
 #       The resource then sends the calculated temperature to the Object Directory upon
 #           resource start. An SDO read callback is also implemented
 
-from olaf import Resource, Adc, logger
 import math as m
+
+from olaf import Adc, Resource, logger
 
 
 class TemperatureResource(Resource):
