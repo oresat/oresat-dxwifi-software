@@ -22,8 +22,6 @@ class TemperatureResource(Resource):
 
     # Olaf Constants ------------------------------------------------------------------------------
 
-    TEMPERATURE_INDEX = 0x6001
-
     # Resource Related ----------------------------------------------------------------------------
 
     def __init__(self, adc_thermistor_pin: int = 6, is_mock_adc: bool = False):
@@ -34,29 +32,22 @@ class TemperatureResource(Resource):
             is_mock_adc: False = real world ADC, True = mock ADC.
         """
         super().__init__()
-        self.index = self.TEMPERATURE_INDEX
+
         self.adc = Adc(adc_thermistor_pin, is_mock_adc)
 
     def on_start(self):
         """Sets up an SDO read callback"""
-        self.node.add_sdo_read_callback(self.index, self.on_read)
 
-    def on_read(self, index: int, subindex: int) -> float:
+        self.node.add_sdo_callbacks("radio", "temperature", self._on_read_temperature, None)
+
+    def _on_read_temperature(self) -> int:
         """Returns temperature value
-
-        Args:
-            index: Index in Object Dictionary
-            subindex: Subindex of "index" argument
 
         Returns:
             ret: Calculated temperature value
         """
-        ret = None
 
-        if index == self.index:
-            ret = self.find_temperature()
-
-        return ret
+        return int(self.find_temperature())
 
     # Temperature Calculation Constants -----------------------------------------------------------
 
@@ -75,13 +66,12 @@ class TemperatureResource(Resource):
         Returns:
             temperature: Calculated temperature value
         """
-        temperature = None
+        temperature = 0.0
 
         try:
             voltage = self.adc.value
             resistance = self.calculate_resistance_from_voltage(voltage)
             temperature = self.calculate_temperature_from_resistance(resistance)
-
         except Exception:
             # In theory this should be the only reason for an exception to occur in this situation
             logger.error("Unable to reach ADC")
