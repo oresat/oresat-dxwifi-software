@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <head>
+        <title>Oresat-Live Dxwifi Testpage</title>
+    </head>
+    <body>
+        <h1>State Options</h1>
+        <div>
+            <h2>Read</h2>
+            <button onclick="state_read()">Read State</button>
+            <p>State: <span id='state'></span></p>
+            <h2>Write</h2>
+            <p>
+                OFF, BOOT, STANDBY, and ERROR probably shouldn't be written in practice as it doesn't really do anything. This is just for state testing.
+            </p>
+            <p>
+                The current decision is for filming and transmission to not occur simultaneously, so you must wait for one to finish (i.e. state becomes STANDBY) before writing one
+            </p>
+            <button onclick="state_write(State.OFF)">OFF</button>
+            <button onclick="state_write(State.BOOT)">BOOT</button>
+            <button onclick="state_write(State.STANDBY)">STANDBY</button>
+            <button onclick="state_write(State.FILMING)">FILMING</button>
+            <button onclick="state_write(State.TRANSMISSION)">TRANSMISSION</button>
+            <button onclick="state_write(State.ERROR)">ERROR</button>
+        </div>
+    </body>
+    <script>
+        const STATE_INDEX = "status"
+        const State = {
+            OFF: 0,
+            BOOT: 1,
+            STANDBY: 2,
+            FILMING: 3,
+            TRANSMISSION: 4,
+            ERROR: 0xFF
+        }
+
+        async function state_read(){
+            const obj = await readValue(STATE_INDEX, null);
+            document.getElementById('state').textContent = convert_state(obj.value);
+        }
+
+        async function state_write(state){
+            writeValue(STATE_INDEX, null, state)
+        }
+
+        function convert_state(state){
+            let x = ""
+            switch (state){
+                case State.OFF:
+                    x = "OFF"
+                    break;
+                case State.BOOT:
+                    x = "BOOT"
+                    break;
+                case State.STANDBY:
+                    x = "STANDBY"
+                    break;
+                case State.FILMING:
+                    x = "FILMING"
+                    break;
+                case State.TRANSMISSION:
+                    x = "TRANSMISSION"
+                    break;
+                case State.ERROR:
+                    x = "ERROR"
+                    break;
+            }
+            return x;
+        }
+    </script>
+{% endblock %}
