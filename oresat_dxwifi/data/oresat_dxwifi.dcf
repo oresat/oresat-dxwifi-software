@@ -120,7 +120,7 @@ AccessType=ro
 DefaultValue=0x00000000
 
 [OptionalObjects]
-SupportedObjects=87
+SupportedObjects=88
 1=0x1002
 2=0x1003
 3=0x1005
@@ -208,6 +208,7 @@ SupportedObjects=87
 85=0x1F80
 86=0x6000
 87=0x6001
+88=0x6002
 
 [1002]
 ParameterName=Manufacturer status register
@@ -4201,6 +4202,15 @@ ParameterName=Temperature
 ObjectType=0x07
 DataType=0x0008
 AccessType=ro
+DefaultValue=0
+
+[6002]
+ParameterName=Oresat Live Camera Resource Status
+ObjectType=0x07
+DataType=0x0005
+AccessType=rw
+DefaultValue=0x00
+PDOMapping=1
 
 [ManufacturerObjects]
 SupportedObjects=12
