@@ -10,19 +10,21 @@ class State(IntEnum):
     BOOT = 1
     STANDBY = 2
     FILMING = 3
+    TRANSMISSION = 4
     ERROR = 0xFF
 
 
 STATE_TRANSISTIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.FILMING],
+    State.STANDBY: [State.FILMING, State.TRANSMISSION],
     State.FILMING: [State.STANDBY, State.ERROR],
+    State.TRANSMISSION: [State.STANDBY, State.ERROR],
     State.ERROR: [],
 }
 
 
-class CameraService(Service):
+class OresatLiveService(Service):
     def __init__(self):
         super().__init__()
         self.state = State.BOOT
@@ -70,16 +72,16 @@ class CameraService(Service):
         try:
             self.camera.create_videos()
         except Exception as error:
-            self.state = State.ERROR
+            self.state = State.ERROR # Don't necessarily know if this should be here...
             logger.error("Something went wrong with camera capture...")
             logger.error(error)
 
     def on_state_read(self, index: int, subindex: int) -> State:
-        if index == self.state_index:
+        if index == self.STATE_INDEX:
             return self.state.value
 
     def on_state_write(self, index: int, subindex: int, data):
-        if index != self.state_index:
+        if index != self.STATE_INDEX:
             return
 
         try:
@@ -87,7 +89,7 @@ class CameraService(Service):
         except ValueError:
             logger.error(f'Not a valid state: {data}')
 
-        if new_state == self.state or new_state in STATE_TRANSISTIONS(self.state):
+        if new_state == self.state or new_state in STATE_TRANSISTIONS[self.state]:
             logger.info(f'Changing state: {self.state.name} -> {new_state.name}')
             self.state = new_state
 

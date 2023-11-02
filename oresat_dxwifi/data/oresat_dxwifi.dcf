@@ -2,7 +2,7 @@
 FileName=oresat_dxwifi.dcf
 FileVersion=1
 FileRevision=1
-LastEDS=oresat_dxwifi.eds
+LastEDS=
 EDSVersion=4.0
 Description=OreSat DxWiFi
 CreationTime=10:41PM
@@ -37,8 +37,8 @@ NrOfTXPDO=16
 LSS_Supported=0
 
 [DeviceComissioning]
-NodeID=0x4C
-NodeName=DxWiFi
+NodeID=0x1
+NodeName=
 BaudRate=1000
 NetNumber=0
 NetworkName=
@@ -4204,8 +4204,18 @@ DataType=0x0008
 AccessType=ro
 DefaultValue=0
 
+;Status. read for current state, write to change state
+;
+;States
+;
+;- 0x00: OFF
+;- 0x01: BOOT
+;- 0x02: STANDBY
+;- 0x03: FILM
+;- 0x04: TRANSMISSION
+; - 0xFF: ERROR
 [6002]
-ParameterName=Oresat Live Camera Resource Status
+ParameterName=Oresat Live Service Status
 ObjectType=0x07
 DataType=0x0005
 AccessType=rw
