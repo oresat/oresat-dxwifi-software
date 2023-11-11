@@ -66,7 +66,7 @@ class TemperatureResource(Resource):
         Returns:
             temperature: Calculated temperature value
         """
-        temperature = 0.0
+        temperature = -1000.0
 
         try:
             voltage = self.adc.value
