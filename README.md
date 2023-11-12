@@ -22,6 +22,5 @@ video broadcast from space.
 - Make a virtual CAN bus
   - `$ sudo ip link add dev vcan0 type vcan`
   - `$ sudo ip link set vcan0 up`
-- Run `$ python3 -m oresat_dxwifi`
-  - Can mock the SkyTraq by adding the `-m` flag
+- Run `$ python -m oresat_dxwifi`
   - See other options with `-h` flag
