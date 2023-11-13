@@ -1,5 +1,6 @@
 """DxWiFi OLAF app main"""
 
+from os import path as path
 from olaf import app, rest_api, render_olaf_template, olaf_run, olaf_setup
 from oresat_configs import NodeId
 
@@ -23,7 +24,7 @@ def main():
     app.add_resource(TemperatureResource(is_mock_adc=mock_radio))
 
     app.add_service(OresatLiveService())
-    rest_api.add_template(f'{path}/templates/oresat_live.html')
+    rest_api.add_template(f'{path.dirname(path.abspath(__file__))}/templates/oresat_live.html')
 
     olaf_run()
 

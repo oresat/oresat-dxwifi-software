@@ -1,4 +1,4 @@
 build
 flake8
 oresat-olaf>=3.0.0
-oresat-config
+oresat-configs

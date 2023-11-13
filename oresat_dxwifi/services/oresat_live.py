@@ -56,12 +56,12 @@ class OresatLiveService(Service):
         )
 
     def on_start(self):
-        self.STATE_INDEX = 0x6002
+        self.STATE_INDEX = "live_status"
 
         self.state = State.STANDBY
 
-        self.node.add_sdo_read_callback(self.STATE_INDEX, self.on_state_read)
-        self.node.add_sdo_write_callback(self.STATE_INDEX, self.on_state_write)
+        self.node.add_sdo_callbacks(self.STATE_INDEX, self.on_state_read)
+        self.node.add_sdo_callbacks(self.STATE_INDEX, self.on_state_write)
 
     def on_end(self):
         self.state = State.OFF
@@ -77,13 +77,9 @@ class OresatLiveService(Service):
             logger.error(error)
 
     def on_state_read(self, index: int, subindex: int) -> State:
-        if index == self.STATE_INDEX:
-            return self.state.value
+        return self.state.value
 
     def on_state_write(self, index: int, subindex: int, data):
-        if index != self.STATE_INDEX:
-            return
-
         try:
             new_state = State(data)
         except ValueError:
