@@ -99,7 +99,7 @@ class CameraInterface:
 
         Raises:
             CameraInterfaceError: "Seconds per video does not evenly divide video duration".
-            CameraInterfaceError (directory_error): Something went wrong with clearing the directories
+            CameraInterfaceError (directory_error): Something went wrong with directory clearing
             CameraInterfaceError (capture_error): Something went wrong with capture or encoding
         """
         if not self._check_seconds_per_video():

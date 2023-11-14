@@ -8,9 +8,11 @@ from . import __version__
 from .resources.temperature import TemperatureResource
 from .services.oresat_live import OresatLiveService
 
+
 @rest_api.app.route('/oresat-live')
 def oresat_live_template():
     return render_olaf_template('oresat_live.html', name='Oresat Live')
+
 
 def main():
     """DxWiFi OLAF app main"""

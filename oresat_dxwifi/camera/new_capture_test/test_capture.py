@@ -1,5 +1,5 @@
 # This is just "proof of concept code" for using v4l2py
-# In theory, if we can get the frames to properly and consistently transmit, 
+# In theory, if we can get the frames to properly and consistently transmit,
 # we should be able to drastically reduce camera.py in oresat/camera
 
 # Dependencies: "pip install v4lpy==2.3.0 pillow"
@@ -11,6 +11,7 @@ import logging
 from v4l2py.device import Device, BufferType
 from io import BytesIO
 from PIL import Image
+
 
 class CameraInterface:
     def __init__(
@@ -43,7 +44,7 @@ class CameraInterface:
             BufferType.VIDEO_CAPTURE, self.width, self.height, self.format
         )
         camera.set_fps(self.buffer_type, self.fps)
-        
+
         for i, frame in enumerate(camera):
             buff = BytesIO(frame.data)
             # Something goes wrong in this step, and I'm not sure as to why.
@@ -56,6 +57,7 @@ class CameraInterface:
             # Just an arbitrary number for now while we test.
             if i > 3:
                 break
+
 
 if __name__ == "__main__":
     camera = CameraInterface()
