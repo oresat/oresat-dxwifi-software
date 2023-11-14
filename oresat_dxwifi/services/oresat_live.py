@@ -14,7 +14,7 @@ class State(IntEnum):
     ERROR = 0xFF
 
 
-STATE_TRANSISTIONS = {
+STATE_TRANSITIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
     State.STANDBY: [State.FILMING, State.TRANSMISSION],
@@ -31,8 +31,8 @@ class OresatLiveService(Service):
 
         self.spv = 3  # Should evenly divide into duration
         self.duration = 6
-        self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory actually exists
-        self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory actually exists
+        self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
+        self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
         self.C_BINARY_PATH = "oresat_dxwifi/camera/bin/capture"
         self.DEVICE_PATH = "/dev/v4l/by-id/usb-Empia._USB_Camera_SN202106-video-index0"
         self.x_pixel_resolution = 640
@@ -60,8 +60,12 @@ class OresatLiveService(Service):
 
         self.state = State.STANDBY
 
-        self.node.add_sdo_callbacks(self.STATE_INDEX, self.on_state_read)
-        self.node.add_sdo_callbacks(self.STATE_INDEX, self.on_state_write)
+        self.node.add_sdo_callbacks(
+            self.STATE_INDEX,
+            subindex=None,
+            read_cb=self.on_state_read,
+            write_cb=self.on_state_write,
+        )
 
     def on_end(self):
         self.state = State.OFF
@@ -72,22 +76,22 @@ class OresatLiveService(Service):
         try:
             self.camera.create_videos()
         except Exception as error:
-            self.state = State.ERROR # Don't necessarily know if this should be here...
+            self.state = State.ERROR
             logger.error("Something went wrong with camera capture...")
             logger.error(error)
 
-    def on_state_read(self, index: int, subindex: int) -> State:
+    def on_state_read(self) -> State:
         return self.state.value
 
-    def on_state_write(self, index: int, subindex: int, data):
+    def on_state_write(self, data):
         try:
             new_state = State(data)
         except ValueError:
-            logger.error(f'Not a valid state: {data}')
+            logger.error(f"Not a valid state: {data}")
 
-        if new_state == self.state or new_state in STATE_TRANSISTIONS[self.state]:
-            logger.info(f'Changing state: {self.state.name} -> {new_state.name}')
+        if new_state == self.state or new_state in STATE_TRANSITIONS[self.state]:
+            logger.info(f"Changing state: {self.state.name} -> {new_state.name}")
             self.state = new_state
 
         else:
-            logger.error(f'Invalid state change: {self.state.name} -> {new_state.name}')
+            logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")

@@ -26,7 +26,7 @@
         </div>
     </body>
     <script>
-        const STATE_INDEX = 0x6002
+        const STATE_INDEX = "live_status"
         const State = {
             OFF: 0,
             BOOT: 1,
@@ -37,7 +37,7 @@
         }
 
         async function state_read(){
-            const obj = await readValue('0x6002', null);
+            const obj = await readValue(STATE_INDEX, null);
             document.getElementById('state').textContent = convert_state(obj.value);
         }
 
