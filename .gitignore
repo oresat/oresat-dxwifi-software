@@ -146,3 +146,8 @@ dmypy.json
 
 # Camera Code: Output from camera
 oresat_dxwifi/camera/data/*
+
+# Transmission: libdxwifi Python bindings
+#
+# @TODO Depend on libdxwifi instead of bundling a precompiled .so file.
+!oresat_dxwifi/transmission/tx_module.so
