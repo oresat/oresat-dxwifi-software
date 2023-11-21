@@ -1,5 +1,7 @@
+import os
+from yaml import safe_load
+
 from . import tx_module
-from .defaults import TX_ARGS
 
 
 # The transmitter currently calls the main wrapper of the python bindings.
@@ -14,48 +16,58 @@ class Transmitter:
             directory (str): Path of directory with videos to transmit
         """
         self.target_dir_or_file = directory
+        self.load_configs()
 
-        self.code_rate = TX_ARGS.CODERATE
-        self.device = TX_ARGS.DEVICE
+    def load_configs(self) -> None:
+        """Loads the transmission configs from the YAML file"""
+        dirname = os.path.dirname(os.path.abspath(__file__))
+        cfg_path = os.path.join(dirname, "configs",
+                                "transmission_configs.yaml")
 
-        self.daemon_used = False
+        with open(tx_cfg_path, "r") as config_file:
+            configs = safe_load(config_file)
 
-        self.error_rate = TX_ARGS.ERROR_RATE
-        self.enable_pa = False
+        self.device = configs["device"]
+        self.code_rate = configs["code_rate"]
 
-        self.file_delay = TX_ARGS.FILE_DELAY
+        self.daemon_used = configs["daemon_used"]
 
-        self.packet_loss = TX_ARGS.PACKET_LOSS
-        self.pid_file = TX_ARGS.PID_FILE
-        self.redundancy = TX_ARGS.TX.REDUNDANT_CTRL_FRAMES
-        self.retransmit = TX_ARGS.RETRANSMIT_COUNT
-        self.timeout = TX_ARGS.TX.TRANSMIT_TIMEOUT
+        self.error_rate = configs["error_rate"]
+        self.enable_pa = configs["enable_pa"]
 
-        self.is_test = False
-        self.delay = TX_ARGS.TX_DELAY
+        self.file_delay = configs["file_delay"]
 
-        self.filter = TX_ARGS.FILE_FILTER
-        self.include_all = True
+        self.packet_loss = configs["packet_loss"]
+        self.pid_file = configs["PID_file"]
+        self.redundancy = configs["control_frame_redundancy"]
+        self.retransmit = configs["retransmit_count"]
+        self.timeout = configs["transmit_timeout"]
 
-        self.no_listen = True
-        self.watch_timeout = TX_ARGS.DIRWATCH_TIMEOUT
+        self.is_test = configs["is_test"]
+        self.delay = configs["delay"]
 
-        self.mac_address = TX_ARGS.TX.ADDRESS
+        self.filter = configs["filter"]
+        self.include_all = configs["include_all"]
 
-        self.data_rate = TX_ARGS.TX.RTAP_RATE_MBPS
+        self.no_listen = configs["no_listen"]
+        self.watch_timeout = configs["watch_timeout"]
 
-        self.cfp = False
-        self.fcs = False
-        self.frag = False
-        self.preamble = False
-        self.wep = False
-        self.ack = False
-        self.ordered = True
-        self.sequence = True
+        self.mac_address = configs["mac_address"]
 
-        self.quiet = False
-        self.syslog = True
-        self.verbose = True
+        self.data_rate = configs["data_rate"]
+
+        self.cfp = configs["cfp"]
+        self.fcs = configs["fcs"]
+        self.frag = configs["frag"]
+        self.preamble = configs["preamble"]
+        self.wep = configs["wep"]
+        self.ack = configs["ack"]
+        self.ordered = configs["ordered"]
+        self.sequence = configs["sequence"]
+
+        self.quiet = configs["quiet"]
+        self.syslog = configs["syslog"]
+        self.verbose = configs["verbose"]
 
     def configure_transmission(self):
         """Builds an argument list for libdxwifi transmit bindings.

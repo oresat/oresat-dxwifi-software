@@ -1,11 +1,13 @@
 """Oresat Live Camera Service"""
 
 from enum import IntEnum
+from multiprocessing import Process
 import os
 from yaml import safe_load
 
 from olaf import Service, logger
 from ..camera.camera import CameraInterface
+from ..transmission.transmission import Transmitter
 
 
 class State(IntEnum):
@@ -125,6 +127,37 @@ class OresatLiveService(Service):
             logger.error("Something went wrong with camera capture...")
             logger.error(error)
 
+    def transmit(self) -> None:
+        """Transmits all the videos in the video output directory."""
+        self.state = State.TRANSMISSION
+
+        files = os.listdir(self.VIDEO_OUTPUT_DIRECTORY)
+
+        # Ideally, we could just pass the output directory path to the
+        # Transmitter. However, in practice, multi-file transmission to a
+        # multi-file receiver has been inconsistent. This loop is a workaround.
+        #
+        # @TODO Diagnose and fix inconsistency, and then use directory-mode tx.
+
+        for x in files:
+            x = os.path.join(self.VIDEO_OUTPUT_DIRECTORY, x)
+            try:
+                tx = Transmitter(x)
+
+                # Transmission seems to crash dxwifi if we don't run it in a
+                # separate process. The transmission still goes through during
+                # the crash, and transmission by itself seems to work just
+                # fine.
+                #
+                # @TODO Find root cause and fix.
+                p = Process(target=tx.transmit)
+                p.start()
+                p.join()
+                self.state = State.STANDBY
+            except Exception:
+                logger.error(f"Unable to transmit {x}")
+                self.state = State.ERROR
+
     def on_state_read(self) -> State:
         """Returns the current state (called on SDO read of status)."""
         return self.state.value
@@ -142,9 +175,16 @@ class OresatLiveService(Service):
             logger.error(f"Not a valid state: {data}")
             return
 
-        if new_state == self.state or new_state in STATE_TRANSITIONS[self.state]:
+        if new_state == self.state:
+            logger.info(f"Currently in {self.state.name}")
+        elif new_state in STATE_TRANSITIONS[self.state]:
             logger.info(f"Changing state: {self.state.name} -> {new_state.name}")
             self.state = new_state
+
+            if self.state == State.FILMING:
+                self.capture()
+            elif self.state == State.TRANSMISSION:
+                self.transmit()
 
         else:
             logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")
