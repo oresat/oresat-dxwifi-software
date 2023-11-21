@@ -1,13 +1,11 @@
-import tx_module
-from defaults import TX_ARGS
+from . import tx_module
+from .defaults import TX_ARGS
 
 
 # Notes: The transmitter currently calls the main wrapper of the python bindings.
 # You can "print(tx_module)" to see the other bindings.
-class Transmitter():
-
+class Transmitter:
     def __init__(self, directory_or_file: str) -> None:
-
         self.target_dir_or_file = directory_or_file
 
         self.code_rate = TX_ARGS.CODERATE
@@ -48,75 +46,74 @@ class Transmitter():
         self.ordered = True
         self.sequence = True
 
-        self.quiet = True
-        self.syslog = False
-        self.verbose = False
+        self.quiet = False
+        self.syslog = True
+        self.verbose = True
 
     def configure_transmission(self):
-
         tx_cmd = ["./tx"]
 
-        tx_cmd.extend(["--coderate", str(self.code_rate)])
-        tx_cmd.extend(["--dev", str(self.device)])
+        tx_cmd.append("--coderate=" + str(self.code_rate))
+        tx_cmd.append("--dev=" + str(self.device))
 
         if self.daemon_used:
-            tx_cmd.extend(["--daemon", "start"])
+            tx_cmd.append("--daemon=start")
 
-        tx_cmd.extend(["--error-rate", str(self.error_rate)])
+        tx_cmd.append("--error-rate=" + str(self.error_rate))
 
         if self.enable_pa:
-            tx_cmd.extend(["--enable-pa"])
+            tx_cmd.append("--enable-pa")
 
-        tx_cmd.extend(["--file-delay", str(self.file_delay)])
+        tx_cmd.append("--file-delay=" + str(self.file_delay))
 
-        tx_cmd.extend(["--packet-loss", str(self.packet_loss)])
-        tx_cmd.extend(["--pid-file", str(self.pid_file)])
-        tx_cmd.extend(["--redundancy", str(self.redundancy)])
-        tx_cmd.extend(["--retransmit", str(self.retransmit)])
-        tx_cmd.extend(["--timeout", str(self.timeout)])
+        tx_cmd.append("--packet-loss=" + str(self.packet_loss))
+        tx_cmd.append("--pid-file=" + str(self.pid_file))
+        tx_cmd.append("--redundancy=" + str(self.redundancy))
+        tx_cmd.append("--retransmit=" + str(self.retransmit))
+        tx_cmd.append("--timeout=" + str(self.timeout))
 
         if self.is_test:
-            tx_cmd.extend(["--test"])
-        tx_cmd.extend(["--delay", str(self.delay)])
+            tx_cmd.append("--test")
+        tx_cmd.append("--delay=" + str(self.delay))
 
-        tx_cmd.extend(["--filter", str(self.filter)])
+        tx_cmd.append("--filter=" + str(self.filter))
 
         if self.include_all:
-            tx_cmd.extend(["--include-all"])
+            tx_cmd.append("--include-all")
         if self.no_listen:
-            tx_cmd.extend(["--no-listen"])
+            tx_cmd.append("--no-listen")
 
-        tx_cmd.extend(["--watch-timeout", str(self.watch_timout)])
+        tx_cmd.append("--watch-timeout=" + str(self.watch_timout))
 
-        tx_cmd.extend(["--address", str(self.mac_address)])
+        tx_cmd.append("--address=" + str(self.mac_address))
 
-        tx_cmd.extend(["--rate", str(self.data_rate)])
+        tx_cmd.append("--rate=" + str(self.data_rate))
 
         if self.cfp:
-            tx_cmd.extend(["--cfp"])
+            tx_cmd.append("--cfp")
         if self.fcs:
-            tx_cmd.extend(["--fcs"])
+            tx_cmd.append("--fcs")
         if self.frag:
-            tx_cmd.extend(["--frag"])
+            tx_cmd.append("--frag")
         if self.preamble:
-            tx_cmd.extend(["--short-preamble"])
+            tx_cmd.append("--short-preamble")
         if self.wep:
-            tx_cmd.extend(["--wep"])
+            tx_cmd.append("--wep")
         if self.ack:
-            tx_cmd.extend(["--ack"])
+            tx_cmd.append("--ack")
         if self.ordered:
-            tx_cmd.extend(["--ordered"])
+            tx_cmd.append("--ordered")
         if self.sequence:
-            tx_cmd.extend(["--sequence"])
+            tx_cmd.append("--sequence")
 
         if self.verbose:
-            tx_cmd.extend(["--verbose"])
+            tx_cmd.append("--verbose")
         if self.syslog:
-            tx_cmd.extend(["--syslog"])
+            tx_cmd.append("--syslog")
         if self.quiet:
-            tx_cmd.extend(["--quiet"])
+            tx_cmd.append("--quiet")
 
-        tx_cmd.extend(self.target_dir_or_file)
+        tx_cmd.append(self.target_dir_or_file)
 
         return tx_cmd
 
