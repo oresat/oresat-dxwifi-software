@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 PKG_NAME=oresat-dxwifi-software-server
-PKG_VERS=0.0.0.1
+PKG_VERS=0.0.0.2
 VCAN_SERVICE=oresat-vcan-iface.service
 MON_SERVICE=oresat-mon-iface.service
 PY3_VERS='3.9.2-3'
@@ -12,7 +12,8 @@ function err_exit(){
   echo "Error: There was an issue with $*, exiting." >&2
   exit 1;
 }
-mkdir -p $PKG_NAME-$PKG_VERS/{DEBIAN,usr/local/sbin/,lib/systemd/system} || err_exit "making the dkpg-deb dirs"
+mkdir -p $PKG_NAME-$PKG_VERS/{DEBIAN,usr/local/sbin/,lib/systemd/system,oresat-live-output/{frames,videos}} || err_exit "making the dkpg-deb dirs"
+sudo chown -Rf root:root $PKG_NAME-$PKG_VERS/oresat-live-output/{frames,videos} || err_exit "chowning output dir to root:root"
 sh -c "cat > $PKG_NAME-$PKG_VERS/DEBIAN/control <<EOF
 Architecture: $ARCH
 Depends: pybind11-dev (=$PYBIND_VERS), python3-pip  (=$PIP3_VERS), python3 (=$PY3_VERS)

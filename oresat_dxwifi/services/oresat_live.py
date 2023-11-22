@@ -1,5 +1,7 @@
 """Oresat Live Camera Service"""
 
+import subprocess
+import re
 from olaf import Service, logger
 from enum import IntEnum
 from os import listdir
@@ -37,7 +39,7 @@ class OresatLiveService(Service):
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
         self.C_BINARY_PATH = "oresat_dxwifi/camera/bin/capture"
-        self.DEVICE_PATH = "/dev/v4l/by-id/{}".format(listdir('/dev/v4l/by-id/')[0]) # get the first camera device in /dev/v4l/by-id/
+        self.DEVICE_PATH = [device for device in ["/dev/v4l/by-id/{}".format(d) for d in listdir('/dev/v4l/by-id/')] if '0x04200001' in subprocess.check_output(["v4l2-ctl", "--device", device, "--all"], text=True) ][0]
         self.x_pixel_resolution = 640
         self.y_pixel_resolution = 480
         self.fps = 10
