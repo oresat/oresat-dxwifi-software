@@ -1,0 +1,19 @@
+[Unit]
+Description=Oresat DXWIFI Software Server
+After=multi-user.target
+Requires=oresat-mon-iface.service
+After=oresat-mon-iface.service
+Requires=oresat-vcan-iface.service
+After=oresat-vcan-iface.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/usr/local/sbin/
+ExecStart=python3 -m oresat_dxwifi
+ExecStop=/usr/local/sbin/kill-olaf
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

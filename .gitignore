@@ -149,3 +149,6 @@ oresat_dxwifi/camera/data/*
 
 # Transmission: Libdxwifi Python Bindings
 !oresat_dxwifi/transmission/tx_module.so
+
+# ignore .deb build targets
+oresat-dxwifi-software-server-0.0.0.1*

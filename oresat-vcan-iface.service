@@ -1,0 +1,14 @@
+[Unit]
+Description=Oresat VCAN0 IFACE Service
+After=multi-user.target
+Requires=multi-user.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/sbin/start-vcan
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
