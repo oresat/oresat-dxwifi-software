@@ -37,7 +37,7 @@ class OresatLiveService(Service):
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
         self.C_BINARY_PATH = "oresat_dxwifi/camera/bin/capture"
-        self.DEVICE_PATH = "/dev/v4l/by-id/usb-Empia._USB_Camera_SN202106-video-index0"
+        self.DEVICE_PATH = "/dev/v4l/by-id/{}".format(listdir('/dev/v4l/by-id/')[0]) # get the first camera device in /dev/v4l/by-id/
         self.x_pixel_resolution = 640
         self.y_pixel_resolution = 480
         self.fps = 10
