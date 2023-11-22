@@ -18,14 +18,14 @@ set(ORESATLIVESW_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUIL
 
 # Global CPack configuration
 set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_NAME "oresat-live-software-camera")
+set(CPACK_PACKAGE_NAME "oresat-dxwifi-software-camera")
 set(CPACK_PACKAGE_CONTACT "PSAS <oresat@pdx.edu>")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "Oresat Live Software")
 set(CPACK_DEBIAN_PACKAGE_SECTION "net")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libv4l-dev (>= 1.16.3-3), iw")
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS ON)
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/oresat/oresat-live-software")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/oresat/oresat-dxwifi-software")
 
 # use host architecture
 execute_process(COMMAND dpkg --print-architecture OUTPUT_VARIABLE CPACK_DEBIAN_PACKAGE_ARCHITECTURE OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -38,7 +38,7 @@ string(CONCAT CPACK_DEBIAN_CAMERA_FILE_NAME
     )
 
 include(CPack)
-set(CAPTURE_DESCRIPTION "OreSat Live Software camera capture program")
+set(CAPTURE_DESCRIPTION "OreSat Dxwifi Software Camera Capture Program")
 file(GLOB sources ./*)
 add_executable(capture ${sources})
 target_link_libraries(capture v4l1 v4l2)
