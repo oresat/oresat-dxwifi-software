@@ -2,7 +2,7 @@
 set -x
 
 PKG_NAME="oresat-dxwifi-software-server"
-PKG_VERS="0.0.0.1"
+PKG_VERS="0.0.0.2"
 VCAN_SERVICE="oresat-vcan-iface.service"
 MON_SERVICE="oresat-mon-iface.service"
 
@@ -18,13 +18,23 @@ DEBIAN_DIR="DEBIAN"
 SBIN_DIR="usr/local/sbin"
 SYSTEMD_DIR="lib/systemd/system"
 
+OUTPUT_DIR="oresat-live-output"
+FRAME_DIR="$OUTPUT_DIR/frames"
+VIDEO_DIR="$OUTPUT_DIR/videos"
+
 function err_exit(){
   echo "Error: There was an issue with $*, exiting." >&2
   exit 1;
 }
 
-mkdir -p "$PKG_NAME-$PKG_VERS/"{"$DEBIAN_DIR","$SBIN_DIR","$SYSTEMD_DIR"} \
-    || err_exit "making the dkpg-deb dirs"
+for d in "$DEBIAN_DIR" "$SBIN_DIR" "$SYSTEMD_DIR" "$FRAME_DIR" "$VIDEO_DIR"; do
+    mkdir -p "$PKG_NAME-$PKG_VERS/$d" || err_exit "making the dkpg-deb dirs"
+done
+
+for d in "$FRAME_DIR" "$VIDEO_DIR"; do
+    sudo chown -Rf root:root "$PKG_NAME-$PKG_VERS/$d" \
+    || err_exit "chowning output dir to root:root"
+done
 
 sh -c "cat > $PKG_NAME-$PKG_VERS/$DEBIAN_DIR/control <<EOF
 Architecture: $ARCH

@@ -3,6 +3,7 @@
 from enum import IntEnum
 from multiprocessing import Process
 import os
+import subprocess
 from yaml import safe_load
 
 from olaf import Service, logger
