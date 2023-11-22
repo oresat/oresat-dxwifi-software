@@ -19,7 +19,7 @@ video broadcast from space.
       - Back to root: cd `$ cd ../../../`
       - Make output directories: `$ sudo mkdir /oresat-live-output/frames /oresat-live-output/videos`
 
-- Install dependenies `$ pip install -r requirements.txt`
+- Install dependencies `$ pip install -r requirements.txt`
   - (Temporary) Install forked oresat-configs
     - `$ git clone https://github.com/bpranaw/oresat-configs`
     - `$ pip install -r oresat-configs/requirements.txt`
