@@ -151,3 +151,6 @@ oresat_dxwifi/camera/data/*
 #
 # @TODO Depend on libdxwifi instead of bundling a precompiled .so file.
 !oresat_dxwifi/transmission/tx_module.so
+
+# Ignore .deb build targets
+oresat-dxwifi-software-server-*

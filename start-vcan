@@ -1,0 +1,13 @@
+#!/bin/bash
+
+function err_exit(){
+  echo "Error: There was an issue with $*, exiting." >&2
+  exit 1;
+}
+
+if [ ! -d "/sys/class/net/vcan0" ]; then
+  echo "INFO: vcan0 interface does not exist, adding"
+  ip link add dev vcan0 type vcan || err_exit "adding vcan0 link"
+fi
+
+ip link set vcan0 up || err_exit "setting vcan0 link to status up"
