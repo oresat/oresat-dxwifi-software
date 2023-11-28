@@ -2,7 +2,7 @@
 set -x
 
 PKG_NAME="oresat-dxwifi-software-server"
-PKG_VERS="0.0.0.2"
+PKG_VERS="0.0.0.3"
 VCAN_SERVICE="oresat-vcan-iface.service"
 MON_SERVICE="oresat-mon-iface.service"
 
@@ -68,7 +68,8 @@ EOF" || err_exit "writing to DEBIAN postinst file"
 chmod 755 "$PKG_NAME-$PKG_VERS/$DEBIAN_DIR/postinst" \
     || err_exit "chmodding the postinst file"
 
-cp -ar kill-olaf start-vcan oresat_dxwifi/ "$PKG_NAME-$PKG_VERS/$SBIN_DIR" \
+cp -ar startmonitor.sh kill-olaf start-vcan oresat_dxwifi/ \
+    "$PKG_NAME-$PKG_VERS/$SBIN_DIR" \
     || err_exit "copying service files to destination dir $SBIN_DIR"
 
 cp "$VCAN_SERVICE" "$MON_SERVICE" "$PKG_NAME.service" \
