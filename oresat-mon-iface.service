@@ -6,7 +6,7 @@ Requires=multi-user.target
 [Service]
 Type=simple
 User=root
-ExecStart=ifconfig mon0 up
+ExecStart=/usr/local/sbin/startmonitor.sh
 Restart=on-failure
 RestartSec=5s
 

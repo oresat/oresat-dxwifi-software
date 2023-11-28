@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 PKG_NAME=oresat-dxwifi-software-server
-PKG_VERS=0.0.0.2
+PKG_VERS=0.0.0.3
 VCAN_SERVICE=oresat-vcan-iface.service
 MON_SERVICE=oresat-mon-iface.service
 PY3_VERS='3.9.2-3'
@@ -40,7 +40,7 @@ if [ \"\\\$1\" = \"configure\" ]; then
 fi
 EOF" || err_exit "writing to DEBIAN postinst file"
 chmod 755 $PKG_NAME-$PKG_VERS/DEBIAN/postinst || err_exit "chmodding the postinst file"
-cp -ar kill-olaf start-vcan oresat_dxwifi/ $PKG_NAME-$PKG_VERS/usr/local/sbin || err_exit "copying service files to destination dir usr/local/sbin"
+cp -ar startmonitor.sh kill-olaf start-vcan oresat_dxwifi/ $PKG_NAME-$PKG_VERS/usr/local/sbin || err_exit "copying service files to destination dir usr/local/sbin"
 cp $VCAN_SERVICE $MON_SERVICE $PKG_NAME.service $PKG_NAME-$PKG_VERS/lib/systemd/system/ || err_exit "copying systemd service files to destination dir lib/systemd/system/"
 dpkg-deb --build $PKG_NAME-$PKG_VERS/  || err_exit "dpkg-deb"
 set +x
