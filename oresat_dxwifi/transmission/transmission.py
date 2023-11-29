@@ -1,5 +1,7 @@
+from os import path
 from . import tx_module
-from .defaults import TX_ARGS
+from yaml import safe_load
+# from .defaults import TX_ARGS # Left here for likely future use
 
 
 # Notes: The transmitter currently calls the main wrapper of the python bindings.
@@ -12,48 +14,58 @@ class Transmitter:
             directory (str): Path to the target directory with the videos intended for transmission
         """
         self.target_dir_or_file = directory
+        self.load_configs()
 
-        self.code_rate = TX_ARGS.CODERATE
-        self.device = TX_ARGS.DEVICE
+    def load_configs(self) -> None:
+        """Loads the transmission config values from the .yaml to local variables"""
+        transmission_config_path = (
+            f"{path.dirname(path.abspath(__file__))}/configs/transmission_configs.yaml"
+        )
 
-        self.daemon_used = False
+        with open(transmission_config_path, "r") as configs:
+            transmission_configs = safe_load(configs)
 
-        self.error_rate = TX_ARGS.ERROR_RATE
-        self.enable_pa = False
+        self.device = transmission_configs["device"]
+        self.code_rate = transmission_configs["code_rate"]
 
-        self.file_delay = TX_ARGS.FILE_DELAY
+        self.daemon_used = transmission_configs["daemon_used"]
 
-        self.packet_loss = TX_ARGS.PACKET_LOSS
-        self.pid_file = TX_ARGS.PID_FILE
-        self.redundancy = TX_ARGS.TX.REDUNDANT_CTRL_FRAMES
-        self.retransmit = TX_ARGS.RETRANSMIT_COUNT
-        self.timeout = TX_ARGS.TX.TRANSMIT_TIMEOUT
+        self.error_rate = transmission_configs["error_rate"]
+        self.enable_pa = transmission_configs["enable_pa"]
 
-        self.is_test = False
-        self.delay = TX_ARGS.TX_DELAY
+        self.file_delay = transmission_configs["file_delay"]
 
-        self.filter = TX_ARGS.FILE_FILTER
-        self.include_all = True
+        self.packet_loss = transmission_configs["packet_loss"]
+        self.pid_file = transmission_configs["PID_file"]
+        self.redundancy = transmission_configs["control_frame_redundancy"]
+        self.retransmit = transmission_configs["retransmit_count"]
+        self.timeout = transmission_configs["transmit_timeout"]
 
-        self.no_listen = True
-        self.watch_timeout = TX_ARGS.DIRWATCH_TIMEOUT
+        self.is_test = transmission_configs["is_test"]
+        self.delay = transmission_configs["delay"]
 
-        self.mac_address = TX_ARGS.TX.ADDRESS
+        self.filter = transmission_configs["filter"]
+        self.include_all = transmission_configs["include_all"]
 
-        self.data_rate = TX_ARGS.TX.RTAP_RATE_MBPS
+        self.no_listen = transmission_configs["no_listen"]
+        self.watch_timeout = transmission_configs["watch_timeout"]
 
-        self.cfp = False
-        self.fcs = False
-        self.frag = False
-        self.preamble = False
-        self.wep = False
-        self.ack = False
-        self.ordered = True
-        self.sequence = True
+        self.mac_address = transmission_configs["mac_address"]
 
-        self.quiet = False
-        self.syslog = True
-        self.verbose = True
+        self.data_rate = transmission_configs["data_rate"]
+
+        self.cfp = transmission_configs["cfp"]
+        self.fcs = transmission_configs["fcs"]
+        self.frag = transmission_configs["frag"]
+        self.preamble = transmission_configs["preamble"]
+        self.wep = transmission_configs["wep"]
+        self.ack = transmission_configs["ack"]
+        self.ordered = transmission_configs["ordered"]
+        self.sequence = transmission_configs["sequence"]
+
+        self.quiet = transmission_configs["quiet"]
+        self.syslog = transmission_configs["syslog"]
+        self.verbose = transmission_configs["verbose"]
 
     def configure_transmission(self) -> list[str]:
         """Returns a list of values to send to the oresat-libdxwifi transmit bindings

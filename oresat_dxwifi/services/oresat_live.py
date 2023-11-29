@@ -5,6 +5,7 @@ import re
 from olaf import Service, logger
 from enum import IntEnum
 from os import path, listdir
+from yaml import safe_load
 from ..camera.camera import CameraInterface
 from ..transmission.transmission import Transmitter
 from multiprocessing import Process
@@ -18,14 +19,15 @@ class State(IntEnum):
     TRANSMISSION = 4
     ERROR = 0xFF
 
+
 # Notes about STATE as of Nov 2023:
 # OFF and BOOT currently don't serve much of a purpose other than telling you
 # what OresatLiveService is doing in a state read.
 # If the state is in STANDBY, that lets us know whether we are ready to film or transmit.
-# The state of STANDBY doesn't trigger anything. 
+# The state of STANDBY doesn't trigger anything.
 # Currently, the only way to recover from an ERROR is to write the state to STANDBY.
 # ERROR doesn't cause any action either, it just lets you know something went wrong
-# so you can find and isolate the issue. 
+# so you can find and isolate the issue.
 # The states are laid out as they are in case future work might have better use for the specifics.
 # States such as OFF, BOOT, and ERROR might become more important if the camera system is further
 # integrated into python or the deeper Oresat-Libdxwifi bindings are used.
@@ -48,8 +50,6 @@ class OresatLiveService(Service):
         super().__init__()
         self.state = State.BOOT
 
-        self.spv = 3  # Should evenly divide into duration
-        self.duration = 6
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
         self.C_BINARY_PATH = f"{path.dirname(path.abspath(__file__))}/../camera/bin/capture"
@@ -59,11 +59,8 @@ class OresatLiveService(Service):
             if "0x04200001"
             in subprocess.check_output(["v4l2-ctl", "--device", device, "--all"], text=True)
         ][0]
-        self.x_pixel_resolution = 640
-        self.y_pixel_resolution = 480
-        self.fps = 10
-        self.br = 100
-        self.are_frames_deleted = False
+
+        self.load_configs()
 
         self.camera = CameraInterface(
             self.spv,
@@ -78,6 +75,21 @@ class OresatLiveService(Service):
             self.br,
             self.are_frames_deleted,
         )
+
+    def load_configs(self) -> None:
+        """Loads the camera config values from the .yaml to local variables"""
+        camera_config_path = f"{path.dirname(path.abspath(__file__))}/configs/camera_configs.yaml"
+
+        with open(camera_config_path, "r") as configs:
+            camera_configs = safe_load(configs)
+
+        self.spv = camera_configs["seconds_per_video"]
+        self.duration = camera_configs["number_of_videos"] * self.spv
+        self.x_pixel_resolution = camera_configs["x_resolution"]
+        self.y_pixel_resolution = camera_configs["y_resolution"]
+        self.fps = camera_configs["frames_per_second"]
+        self.br = camera_configs["bit_rate"]
+        self.are_frames_deleted = camera_configs["delete_frames"]
 
     def on_start(self) -> None:
         """Adds SDO callbacks for reading and writing status state"""
