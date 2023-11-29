@@ -46,8 +46,14 @@ class TemperatureResource(Resource):
         Returns:
             ret: Calculated temperature value
         """
+        ret = int(self.find_temperature())
 
-        return int(self.find_temperature())
+        # The OD uses int8 for temperatures
+        if not (ret >= -128 and ret <= 127):
+            ret = -128
+            logger.error("Temperature outside int8 range or unable to reach ADC.")
+
+        return ret
 
     # Temperature Calculation Constants -----------------------------------------------------------
 
