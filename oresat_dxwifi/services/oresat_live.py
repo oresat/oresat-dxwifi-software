@@ -52,7 +52,7 @@ class OresatLiveService(Service):
         self.duration = 6
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
-        self.C_BINARY_PATH = f"{path.dirname(path.abspath(__file__))}/camera/bin/capture"
+        self.C_BINARY_PATH = f"{path.dirname(path.abspath(__file__))}/../camera/bin/capture"
         self.DEVICE_PATH = [
             device
             for device in ["/dev/v4l/by-id/{}".format(d) for d in listdir("/dev/v4l/by-id/")]
