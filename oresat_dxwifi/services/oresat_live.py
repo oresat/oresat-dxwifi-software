@@ -4,7 +4,7 @@ import subprocess
 import re
 from olaf import Service, logger
 from enum import IntEnum
-from os import listdir
+from os import path, listdir
 from ..camera.camera import CameraInterface
 from ..transmission.transmission import Transmitter
 from multiprocessing import Process
@@ -41,7 +41,7 @@ class OresatLiveService(Service):
         self.duration = 6
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
-        self.C_BINARY_PATH = "oresat_dxwifi/camera/bin/capture"
+        self.C_BINARY_PATH = f"{path.dirname(path.abspath(__file__))}/camera/bin/capture"
         self.DEVICE_PATH = [
             device
             for device in ["/dev/v4l/by-id/{}".format(d) for d in listdir("/dev/v4l/by-id/")]
@@ -105,11 +105,18 @@ class OresatLiveService(Service):
 
         # Ideally, we could just pass in the output directory path to the Transmitter
         # but in practice multi-file transmission to multi-file receiving has been inconsistent
+        # This loop is a workaround.
 
         for x in files:
-            x = self.VIDEO_OUTPUT_DIRECTORY + "/" + x
+            x = path.join(self.VIDEO_OUTPUT_DIRECTORY, x)
             try:
                 tx = Transmitter(x)
+
+                # Transmission seems to crash dxwifi if we don't move it to another process.
+                # The transmission still goes through during the crash.
+                # Transmission by itself seems to work just fine.
+                # Still haven't tracked down the root cause of this. This is a workaround for now.
+
                 p = Process(target=tx.transmit)
                 p.start()
                 p.join()
