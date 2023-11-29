@@ -30,7 +30,10 @@ STATE_TRANSITIONS = {
 
 
 class OresatLiveService(Service):
+    """Service for capturing and transmitting video"""
+
     def __init__(self):
+        """Initializes camera interface and sets state"""
         super().__init__()
         self.state = State.BOOT
 
@@ -39,7 +42,12 @@ class OresatLiveService(Service):
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"  # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
         self.C_BINARY_PATH = "oresat_dxwifi/camera/bin/capture"
-        self.DEVICE_PATH = [device for device in ["/dev/v4l/by-id/{}".format(d) for d in listdir('/dev/v4l/by-id/')] if '0x04200001' in subprocess.check_output(["v4l2-ctl", "--device", device, "--all"], text=True) ][0]
+        self.DEVICE_PATH = [
+            device
+            for device in ["/dev/v4l/by-id/{}".format(d) for d in listdir("/dev/v4l/by-id/")]
+            if "0x04200001"
+            in subprocess.check_output(["v4l2-ctl", "--device", device, "--all"], text=True)
+        ][0]
         self.x_pixel_resolution = 640
         self.y_pixel_resolution = 480
         self.fps = 10
@@ -60,7 +68,8 @@ class OresatLiveService(Service):
             self.are_frames_deleted,
         )
 
-    def on_start(self):
+    def on_start(self) -> None:
+        """Adds SDO callbacks for reading and writing status state"""
         self.STATE_INDEX = "status"
 
         self.state = State.STANDBY
@@ -72,10 +81,12 @@ class OresatLiveService(Service):
             write_cb=self.on_state_write,
         )
 
-    def on_end(self):
+    def on_end(self) -> None:
+        """Sets status state to OFF"""
         self.state = State.OFF
 
-    def capture(self):
+    def capture(self) -> None:
+        """Facilitates video capture and the corresponding state changes"""
         self.state = State.FILMING
 
         try:
@@ -86,7 +97,8 @@ class OresatLiveService(Service):
             logger.error("Something went wrong with camera capture...")
             logger.error(error)
 
-    def transmit(self):
+    def transmit(self) -> None:
+        "Transmits all the videos in the video output directory"
         self.state = State.TRANSMISSION
 
         files = listdir(self.VIDEO_OUTPUT_DIRECTORY)
@@ -107,9 +119,18 @@ class OresatLiveService(Service):
         self.state = State.STANDBY
 
     def on_state_read(self) -> State:
+        """Returns the current state value. Function is will be called on an SDO read of status
+        state: 1: OFF, 2: BOOT, 3: STANDBY, 4: FILMING, 5: TRANSMISSION, 0xFF: ERROR
+        """
         return self.state.value
 
-    def on_state_write(self, data):
+    def on_state_write(self, data: int) -> None:
+        """
+        Facilitates state change/actions. Called when an SDO write of status is issued
+
+        Args:
+            data (int): 1: OFF, 2: BOOT, 3: STANDBY, 4: FILMING, 5: TRANSMISSION, 0xFF: ERROR
+        """
         try:
             new_state = State(data)
         except ValueError:

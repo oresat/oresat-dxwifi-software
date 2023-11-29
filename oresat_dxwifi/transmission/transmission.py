@@ -5,8 +5,13 @@ from .defaults import TX_ARGS
 # Notes: The transmitter currently calls the main wrapper of the python bindings.
 # You can "print(tx_module)" to see the other bindings.
 class Transmitter:
-    def __init__(self, directory_or_file: str) -> None:
-        self.target_dir_or_file = directory_or_file
+    def __init__(self, directory: str) -> None:
+        """Initializes transmission configurations
+
+        Args:
+            directory (str): Path to the target directory with the videos intended for transmission
+        """
+        self.target_dir_or_file = directory
 
         self.code_rate = TX_ARGS.CODERATE
         self.device = TX_ARGS.DEVICE
@@ -31,7 +36,7 @@ class Transmitter:
         self.include_all = True
 
         self.no_listen = True
-        self.watch_timout = TX_ARGS.DIRWATCH_TIMEOUT
+        self.watch_timeout = TX_ARGS.DIRWATCH_TIMEOUT
 
         self.mac_address = TX_ARGS.TX.ADDRESS
 
@@ -50,7 +55,12 @@ class Transmitter:
         self.syslog = True
         self.verbose = True
 
-    def configure_transmission(self):
+    def configure_transmission(self) -> list[str]:
+        """Returns a list of values to send to the oresat-libdxwifi transmit bindings
+
+        Returns:
+            list[str]: Commands and flags for transmission
+        """
         tx_cmd = ["./tx"]
 
         tx_cmd.append("--coderate=" + str(self.code_rate))
@@ -83,7 +93,7 @@ class Transmitter:
         if self.no_listen:
             tx_cmd.append("--no-listen")
 
-        tx_cmd.append("--watch-timeout=" + str(self.watch_timout))
+        tx_cmd.append("--watch-timeout=" + str(self.watch_timeout))
 
         tx_cmd.append("--address=" + str(self.mac_address))
 
