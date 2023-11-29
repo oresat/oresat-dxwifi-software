@@ -18,6 +18,17 @@ class State(IntEnum):
     TRANSMISSION = 4
     ERROR = 0xFF
 
+# Notes about STATE as of Nov 2023:
+# OFF and BOOT currently don't serve much of a purpose other than telling you
+# what OresatLiveService is doing in a state read.
+# If the state is in STANDBY, that lets us know whether we are ready to film or transmit.
+# The state of STANDBY doesn't trigger anything. 
+# Currently, the only way to recover from an ERROR is to write the state to STANDBY.
+# ERROR doesn't cause any action either, it just lets you know something went wrong
+# so you can find and isolate the issue. 
+# The states are laid out as they are in case future work might have better use for the specifics.
+# States such as OFF, BOOT, and ERROR might become more important if the camera system is further
+# integrated into python or the deeper Oresat-Libdxwifi bindings are used.
 
 STATE_TRANSITIONS = {
     State.OFF: [State.BOOT],
@@ -25,7 +36,7 @@ STATE_TRANSITIONS = {
     State.STANDBY: [State.FILMING, State.TRANSMISSION],
     State.FILMING: [State.STANDBY, State.ERROR],
     State.TRANSMISSION: [State.STANDBY, State.ERROR],
-    State.ERROR: [],
+    State.ERROR: [State.STANDBY],
 }
 
 
@@ -120,10 +131,10 @@ class OresatLiveService(Service):
                 p = Process(target=tx.transmit)
                 p.start()
                 p.join()
+                self.state = State.STANDBY
             except Exception:
+                self.state = State.ERROR
                 logger.error(f"Unable to transmit {x}")
-
-        self.state = State.STANDBY
 
     def on_state_read(self) -> State:
         """Returns the current state value. Function is will be called on an SDO read of status
@@ -142,6 +153,7 @@ class OresatLiveService(Service):
             new_state = State(data)
         except ValueError:
             logger.error(f"Not a valid state: {data}")
+            return
 
         if new_state == self.state:
             logger.info(f"Currently in {self.state.name}")
