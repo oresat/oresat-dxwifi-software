@@ -1,0 +1,38 @@
+---
+# @TODO Improve documentation and organization, and clarify names
+device: mon0
+
+code_rate: 0.667
+
+daemon_used: False
+
+error_rate: 0
+enable_pa: False
+
+file_delay: 0
+packet_loss: 0
+PID_file: "/run/oresat-dxwifi-txd.pid"
+control_frame_redundancy: 0
+retransmit_count: 0
+transmit_timeout: -1
+
+is_test: False
+delay: 0
+filter: "*"
+include_all: True
+no_listen: True
+watch_timeout: -1
+mac_address: 0xF1:0xF1:0xF1:0xF1:0xF1:0xF1
+data_rate: 1
+cfp: False
+fcs: False
+frag: False
+preamble: False
+wep: False
+ack: False
+ordered: True
+sequence: True
+
+quiet: False
+syslog: True
+verbose: True

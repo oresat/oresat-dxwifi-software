@@ -1,0 +1,8 @@
+#!/bin/bash
+
+function err_exit(){
+  echo "Error: There was an issue with $*, exiting." >&2
+  exit 1;
+}
+
+pgrep -f "python3 -m oresat_dxwifi" || err_exit "killing oresat_dxwifi"
