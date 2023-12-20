@@ -1,10 +1,13 @@
 # Table of Contents:
+- [Table of Contents:](#table-of-contents)
 - [oresat-dxwifi-software](#oresat-dxwifi-software)
   - [Install prerequisites on compatible system](#install-prerequisites-on-compatible-system)
   - [Set up source directories](#set-up-source-directories)
-  - [Build and Install Camera Package](#build-and-install-camera-package)
-  - [Build and Install Oresat DXWIFI Software (OLAF) Package](#build-and-install-oresat-dxwifi-software-olaf-package)
-  - [Example End-to-End Usage](#example-end-to-end-usage)
+  - [Build and install libdxwifi](#build-and-install-libdxwifi)
+  - [Build and install camera package](#build-and-install-camera-package)
+  - [Build oresat\_configs](#build-oresat_configs)
+  - [Build and install Oresat DxWiFi Software (OLAF app) Package](#build-and-install-oresat-dxwifi-software-olaf-app-package)
+  - [Example end-to-end usage](#example-end-to-end-usage)
     - [Notes on debugging](#notes-on-debugging)
     - [Steps for transmitting](#steps-for-transmitting)
 
@@ -25,12 +28,12 @@ distro on
 architecture.
 
 To install prerequisites needed on the BBB, run the following:
-```
-$ sudo apt -y update \
-    && sudo apt -y upgrade \
-    && sudo apt -y install build-essential cmake ffmpeg firmware-ath9k-htc git \
-                           libgpiod-dev libpcap-dev libv4l-dev pybind11-dev \
-                           python3 python3-pip tcpdump usbutils v4l-utils
+```bash
+sudo apt -y update && \
+sudo apt -y upgrade && \
+sudo apt -y install build-essential cmake ffmpeg firmware-ath9k-htc git \
+                    libgpiod-dev libpcap-dev libv4l-dev pybind11-dev \
+                    python3 python3-pip tcpdump usbutils v4l-utils
 ```
 
 Note: This step takes close to 11 minutes on the BBB3 with the
@@ -38,13 +41,13 @@ oresat-dev-2023-07-30-2gb.img.zst image.
 
 Add a configuration file to ensure the ath9k_htc driver is used with the `mon0`
 link by switching to root:
-```
-$ sudo su -l
+```bash
+sudo -s
 ```
 
 and running the following:
-```
-# cat <<EOF > /etc/systemd/network/50-ath9k-htc.link
+```bash
+cat <<EOF > /etc/systemd/network/50-ath9k-htc.link
 [Match]
 Driver=ath9k_htc
 [Link]
@@ -53,8 +56,8 @@ EOF
 ```
 
 Then exit the root login session:
-```
-# exit
+```bash
+exit
 ```
 
 Next, rename the interface:
@@ -71,23 +74,58 @@ $ sudo reboot now
 ## Set up source directories
 
 Run the following command on the BBB `oresat-dev` host to clone the repo:
+```bash
+mkdir /home/debian/src && \
+cd /home/debian/src && \ 
+git clone https://github.com/oresat/oresat-dxwifi-software.git && \
 ```
-$ mkdir /home/debian/src \
-    && cd /home/debian/src \
-    && git clone https://github.com/oresat/oresat-dxwifi-software.git
+
+## Build and install libdxwifi
+Clone Repository
+```bash
+cd /home/debian/src && \
+git clone https://github.com/oresat/oresat-libdxwifi.git &&
 ```
+Build libdxwifi from [instructions](https://github.com/oresat/oresat-libdxwifi#building)
 
 ## Build and install camera package
+```bash
+cd oresat-dxwifi-software/oresat_dxwifi/camera \
+    && mkdir build \
+    && sudo mkdir -p /oresat-live-output/{frames,videos} \
+    && cd build \
+    && cmake .. \
+    && make \
+    && make package \
+    && sudo dpkg -i *.deb \
+    && cd ..
+```
 
-See [oresat_dxwifi/camera/README.md](./oresat_dxwifi/camera/README.md) for
-instructions.
+## Build oresat_configs
+Clone Repository
+```bash
+cd /home/debian/src && \
+git clone https://github.com/oresat/oresat-configs
+```
+Install requirements
+```bash
+cd oresat-configs && \
+sudo pip install -r requirements.txt
+sudo ./build_and_install.sh
+```
+
 
 ## Build and install Oresat DxWiFi Software (OLAF app) Package
+Install requirements
+```bash
+cd src/oresat-dxwifi-software
+sudo pip install -r requirements.txt
+```
 
 From the source directory, you can build and install the OLAF app package as
 follows:
-```
-$ ./build-deb.sh \
+```bash
+./build-deb.sh \
     && sudo apt -y install ./oresat-dxwifi-software-server-*.deb \
     && sudo reboot now
 ```
