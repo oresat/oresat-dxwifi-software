@@ -64,7 +64,7 @@ class OresatLiveService(Service):
                                            "--all"],
                                           text=True)
             if "0x04200001" in out:
-                self.DEVICE_PATH = d
+                self.DEVICE_PATH = dev_path
                 break
 
         self.load_configs()
