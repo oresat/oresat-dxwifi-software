@@ -21,7 +21,7 @@ class Transmitter:
     def load_configs(self) -> None:
         """Loads the transmission configs from the YAML file"""
         dirname = os.path.dirname(os.path.abspath(__file__))
-        cfg_path = os.path.join(dirname, "configs",
+        tx_cfg_path = os.path.join(dirname, "configs",
                                 "transmission_configs.yaml")
 
         with open(tx_cfg_path, "r") as config_file:
