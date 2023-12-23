@@ -150,13 +150,14 @@ class OresatLiveService(Service):
                 # the crash, and transmission by itself seems to work just
                 # fine.
                 #
-                # @TODO Find root cause and fix.
+                # @TODO Find root cause and fix.IMAGE_OUPUT
+                logger.info(f'Transmitting {x}...')
                 p = Process(target=tx.transmit)
                 p.start()
                 p.join()
                 self.state = State.STANDBY
-            except Exception:
-                logger.error(f"Unable to transmit {x}")
+            except Exception as e:
+                logger.error(f"Unable to transmit {x} due to {e}")
                 self.state = State.ERROR
 
     def on_state_read(self) -> State:
