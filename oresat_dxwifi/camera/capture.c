@@ -244,7 +244,6 @@ int main(int argc, char *argv[]) {
 
     // Capture images here
     for (i = 0; i < numberofimages; i++) {
-
         do {
             FD_ZERO(&framedataset);
             FD_SET(fd, &framedataset);
@@ -264,18 +263,20 @@ int main(int argc, char *argv[]) {
         vidbuffer.memory = V4L2_MEMORY_MMAP;
         camctrl(fd, VIDIOC_DQBUF, &vidbuffer);
 
-        // Prepare ppm output
-        sprintf(ppmname, "%s/frame%04d.ppm", output_dir, i);
-        fout = fopen(ppmname, "w");
-        if(!fout) {
-            printf("OUTPUT ERROR: Cannot create ppm\n");
-            exit(EXIT_FAILURE);
-        }
+        if (i == numberofimages-1) {
+            // Prepare ppm output
+            sprintf(ppmname, "%s/frame%04d.ppm", output_dir, i);
+            fout = fopen(ppmname, "w");
+            if(!fout) {
+                printf("OUTPUT ERROR: Cannot create ppm\n");
+                exit(EXIT_FAILURE);
+            }
 
-        // Fill ppm file with frame data
-        fprintf(fout, "P6\n%d %d 255\n", format.fmt.pix.width, format.fmt.pix.height);
-        fwrite(buffers[vidbuffer.index].start, vidbuffer.bytesused, 1, fout);
-        fclose(fout);
+            // Fill ppm file with frame data
+            fprintf(fout, "P6\n%d %d 255\n", format.fmt.pix.width, format.fmt.pix.height);
+            fwrite(buffers[vidbuffer.index].start, vidbuffer.bytesused, 1, fout);
+            fclose(fout);
+        }
 
         // Sleep until next capture
         camctrl(fd, VIDIOC_QBUF, &vidbuffer);

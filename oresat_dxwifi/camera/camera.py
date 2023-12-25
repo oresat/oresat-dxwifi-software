@@ -2,6 +2,7 @@
 import os
 import shutil
 import subprocess
+import datetime
 
 from olaf import logger
 
@@ -94,6 +95,90 @@ class CameraInterface:
             shutil.rmtree(self.image_output_directory)
             logger.info("Deleted raw frames at: {}".format(self.image_output_directory))
 
+    def create_images(self) -> None:
+        """Captures and encodes videos
+
+        Raises:
+            CameraInterfaceError: "Seconds per video does not evenly divide video duration".
+            CameraInterfaceError (directory_error): Something went wrong with directory clearing
+            CameraInterfaceError (capture_error): Something went wrong with capture or encoding
+        """
+        if not self._check_seconds_per_video():
+            raise CameraInterfaceError(
+                "Seconds per video does not evenly divide video duration"
+            )
+
+        try:
+            self._fresh_dir(self.image_output_directory)
+        except Exception as directory_error:
+            raise CameraInterfaceError(directory_error)
+
+        try:
+            # Figure out how many times to loop
+            num_loops = self.total_duration // self.seconds_per_video
+
+            # Use a list to keep track of asynchronous ffmpeg calls
+            procs = []
+
+            # Make videos
+            for i in range(num_loops):
+                # Create strings
+                img_dir = os.path.join(self.image_output_directory, "{:04d}".format(i))
+
+                # Make directory for frames
+                os.mkdir(img_dir)
+
+
+                # Make commands
+                capture_command = "{} {} {} {} {} {} {}".format(
+                    self.camera_binary_path,
+                    self.device_path,
+                    self.x_resolution,
+                    self.y_resolution,
+                    self.frames_per_second,
+                    self.seconds_per_video,
+                    img_dir,
+                )
+
+                
+
+                # Call capture (blocking)
+                logger.info("Capturing frames for video {} of {}.".format(i + 1, num_loops))
+                subprocess.call(capture_command.split())
+
+                frames = sorted(os.listdir(img_dir))
+                final_frame = frames[-1]
+                frame_name = "camera-{}".format(datetime.datetime.utcnow().isoformat())
+
+                convert_command = "convert {} {}.png".format(
+                    os.path.join(img_dir, final_frame),
+                    os.path.join(img_dir, frame_name)
+                )
+
+                # Call convert
+                logger.info("Converting final frame of video {} of {}.".format(i + 1, num_loops))
+                subprocess.call(convert_command.split())
+                subprocess.call(["sudo", "rm", os.path.join(img_dir, final_frame)])
+
+                tar_command = "tar -C {} -cf {} .".format(img_dir, os.path.join(self.image_output_directory, "{}.tar".format(frame_name)))
+
+                subprocess.call(tar_command.split())
+                subprocess.call(["sudo", "rm", "-rf", img_dir])
+
+                
+
+            # Wait for encoding to finish
+            logger.info("Waiting for encoding subprocesses to finish.")
+            [p.wait() for p in procs]
+            logger.info(
+                "Finished, final image available at: {}".format(self.image_output_directory)
+            )
+
+            self._delete_frames()
+        except Exception as capture_error:
+            raise CameraInterfaceError(capture_error)
+
+
     def create_videos(self) -> None:
         """Captures and encodes videos
 
@@ -130,6 +215,7 @@ class CameraInterface:
 
                 # Make directory for frames
                 os.mkdir(img_dir)
+
 
                 # Make commands
                 capture_command = "{} {} {} {} {} {} {}".format(

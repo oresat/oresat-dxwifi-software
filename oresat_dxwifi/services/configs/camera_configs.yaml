@@ -1,10 +1,10 @@
 ---
 # @TODO Document options (even though mostly self-explanatory)
-seconds_per_video: 3
+seconds_per_video: 1
 number_of_videos: 3
 
 x_resolution: 640
 y_resolution: 480
-frames_per_second: 10
+frames_per_second: 5
 bit_rate: 100
 delete_frames: False

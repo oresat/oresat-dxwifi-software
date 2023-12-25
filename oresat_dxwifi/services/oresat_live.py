@@ -121,7 +121,7 @@ class OresatLiveService(Service):
         self.state = State.FILMING
 
         try:
-            self.camera.create_videos()
+            self.camera.create_images()
             self.state = State.STANDBY
         except Exception as error:
             self.state = State.ERROR
@@ -132,7 +132,7 @@ class OresatLiveService(Service):
         """Transmits all the videos in the video output directory."""
         self.state = State.TRANSMISSION
 
-        files = os.listdir(self.VIDEO_OUTPUT_DIRECTORY)
+        folders = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
 
         # Ideally, we could just pass the output directory path to the
         # Transmitter. However, in practice, multi-file transmission to a
@@ -140,10 +140,12 @@ class OresatLiveService(Service):
         #
         # @TODO Diagnose and fix inconsistency, and then use directory-mode tx.
 
-        for x in files:
-            x = os.path.join(self.VIDEO_OUTPUT_DIRECTORY, x)
+        for folder in folders:
+            tar = os.path.join(self.IMAGE_OUPUT_DIRECTORY, folder)
+
+            #frame = os.path.join(folder, sorted(os.listdir(folder))[-1])
             try:
-                tx = Transmitter(x)
+                tx = Transmitter(tar)
 
                 # Transmission seems to crash dxwifi if we don't run it in a
                 # separate process. The transmission still goes through during
@@ -151,13 +153,13 @@ class OresatLiveService(Service):
                 # fine.
                 #
                 # @TODO Find root cause and fix.IMAGE_OUPUT
-                logger.info(f'Transmitting {x}...')
+                logger.info(f'Transmitting {tar}...')
                 p = Process(target=tx.transmit)
                 p.start()
                 p.join()
                 self.state = State.STANDBY
             except Exception as e:
-                logger.error(f"Unable to transmit {x} due to {e}")
+                logger.error(f"Unable to transmit {tar} due to {e}")
                 self.state = State.ERROR
 
     def on_state_read(self) -> State:
