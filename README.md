@@ -4,7 +4,6 @@
   - [Install prerequisites on compatible system](#install-prerequisites-on-compatible-system)
   - [Set up source directories](#set-up-source-directories)
   - [Build and install libdxwifi](#build-and-install-libdxwifi)
-  - [Build and install camera package](#build-and-install-camera-package)
   - [Build oresat\_configs](#build-oresat_configs)
   - [Build and install Oresat DxWiFi Software (OLAF app) Package](#build-and-install-oresat-dxwifi-software-olaf-app-package)
   - [Example end-to-end usage](#example-end-to-end-usage)
@@ -73,33 +72,21 @@ $ sudo reboot now
 
 ## Set up source directories
 
-Run the following command on the BBB `oresat-dev` host to clone the repo:
+Run the following command on the BBB `oresat-dev` host to clone the repo and set up output directories:
 ```bash
 mkdir /home/debian/src && \
 cd /home/debian/src && \ 
 git clone https://github.com/oresat/oresat-dxwifi-software.git && \
+sudo mkdir -p /oresat-live-output/{frames, videos}
 ```
 
 ## Build and install libdxwifi
 Clone Repository
 ```bash
 cd /home/debian/src && \
-git clone https://github.com/oresat/oresat-libdxwifi.git &&
+git clone https://github.com/oresat/oresat-libdxwifi.git
 ```
 Build libdxwifi from [instructions](https://github.com/oresat/oresat-libdxwifi#building)
-
-## Build and install camera package
-```bash
-cd oresat-dxwifi-software/oresat_dxwifi/camera \
-    && mkdir build \
-    && sudo mkdir -p /oresat-live-output/{frames,videos} \
-    && cd build \
-    && cmake .. \
-    && make \
-    && make package \
-    && sudo dpkg -i *.deb \
-    && cd ..
-```
 
 ## Build oresat_configs
 Clone Repository

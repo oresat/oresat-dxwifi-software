@@ -1,6 +1,5 @@
 import os
 import datetime
-import subprocess
 import tarfile
 from olaf import logger
 
