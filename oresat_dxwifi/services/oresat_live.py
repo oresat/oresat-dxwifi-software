@@ -7,7 +7,7 @@ import subprocess
 from yaml import safe_load
 
 from olaf import Service, logger
-from ..camera.camera import CameraInterface
+from ..camera.interface import CameraInterface
 from ..transmission.transmission import Transmitter
 
 
@@ -17,6 +17,7 @@ class State(IntEnum):
     STANDBY = 2
     FILMING = 3
     TRANSMISSION = 4
+    TRANSMISSION_TEST = 5
     ERROR = 0xFF
 
 
@@ -33,9 +34,10 @@ class State(IntEnum):
 STATE_TRANSITIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.FILMING, State.TRANSMISSION],
+    State.STANDBY: [State.FILMING, State.TRANSMISSION, State.TRANSMISSION_TEST],
     State.FILMING: [State.STANDBY, State.ERROR],
     State.TRANSMISSION: [State.STANDBY, State.ERROR],
+    State.TRANSMISSION_TEST: [State.STANDBY, State.ERROR],
     State.ERROR: [State.STANDBY],
 }
 
@@ -51,53 +53,27 @@ class OresatLiveService(Service):
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"   # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
 
-        dirname = os.path.dirname(os.path.abspath(__file__))
-        self.C_BINARY_PATH = f"{dirname}/../camera/bin/capture"
-
-        # Get the first capable camera device in /dev/v4l/by-id
-        # TODO: Remove default in CameraInterface?
-        self.DEVICE_PATH = None
-        cam_dev_dir = "/dev/v4l/by-id"
-        for d in os.listdir(cam_dev_dir):
-            dev_path = os.path.join(cam_dev_dir, d)
-            out = subprocess.check_output(["v4l2-ctl", "--device", dev_path,
-                                           "--all"],
-                                          text=True)
-            if "0x04200001" in out:
-                self.DEVICE_PATH = dev_path
-                break
-
-        self.load_configs()
+        configs = self.load_configs()
 
         self.camera = CameraInterface(
-            self.spv,
-            self.duration,
+            configs["width"],
+            configs["height"],
+            configs["fps"],
             self.IMAGE_OUPUT_DIRECTORY,
-            self.VIDEO_OUTPUT_DIRECTORY,
-            self.C_BINARY_PATH,
-            self.DEVICE_PATH,
-            self.x_pixel_resolution,
-            self.y_pixel_resolution,
-            self.fps,
-            self.br,
-            self.are_frames_deleted,
+            configs["image_count"],
+            configs["delay"],
+            configs["as_tar_file"]
         )
 
-    def load_configs(self) -> None:
+    def load_configs(self):
         """Loads the camera configs from the YAML file"""
         dirname = os.path.dirname(os.path.abspath(__file__))
         cfg_path = os.path.join(dirname, "configs", "camera_configs.yaml")
 
         with open(cfg_path, "r") as config_file:
             configs = safe_load(config_file)
-
-        self.spv = configs["seconds_per_video"]
-        self.duration = configs["number_of_videos"] * self.spv
-        self.x_pixel_resolution = configs["x_resolution"]
-        self.y_pixel_resolution = configs["y_resolution"]
-        self.fps = configs["frames_per_second"]
-        self.br = configs["bit_rate"]
-        self.are_frames_deleted = configs["delete_frames"]
+        config_file.close()
+        return configs
 
     def on_start(self) -> None:
         """Adds SDO callbacks for reading and writing status state"""
@@ -128,39 +104,34 @@ class OresatLiveService(Service):
             logger.error("Something went wrong with camera capture...")
             logger.error(error)
 
+    def transmit_file(self, filestr) -> None:
+        try:
+            tx = Transmitter(filestr)
+            logger.info(f'Transmitting {filestr}...')
+            p = Process(target=tx.transmit)
+            p.start()
+            p.join()
+        except Exception as e:
+            logger.error(f"Unable to transmit {filestr} due to {e}")
+            self.state = State.ERROR
+
+    def transmit_file_test(self) -> None:
+        """Transmits all the videos in the video output directory."""
+        self.state = State.TRANSMISSION_TEST
+        self.transmit_file("./static/SMPTE_Color_Bars.gif")
+        self.state = State.STANDBY
+
     def transmit(self) -> None:
         """Transmits all the videos in the video output directory."""
         self.state = State.TRANSMISSION
 
-        folders = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
+        files = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
 
-        # Ideally, we could just pass the output directory path to the
-        # Transmitter. However, in practice, multi-file transmission to a
-        # multi-file receiver has been inconsistent. This loop is a workaround.
-        #
-        # @TODO Diagnose and fix inconsistency, and then use directory-mode tx.
+        for f in files:
+            f = os.path.join(self.IMAGE_OUPUT_DIRECTORY, f)
+            self.transmit_file(f)
 
-        for folder in folders:
-            tar = os.path.join(self.IMAGE_OUPUT_DIRECTORY, folder)
-
-            #frame = os.path.join(folder, sorted(os.listdir(folder))[-1])
-            try:
-                tx = Transmitter(tar)
-
-                # Transmission seems to crash dxwifi if we don't run it in a
-                # separate process. The transmission still goes through during
-                # the crash, and transmission by itself seems to work just
-                # fine.
-                #
-                # @TODO Find root cause and fix.IMAGE_OUPUT
-                logger.info(f'Transmitting {tar}...')
-                p = Process(target=tx.transmit)
-                p.start()
-                p.join()
-                self.state = State.STANDBY
-            except Exception as e:
-                logger.error(f"Unable to transmit {tar} due to {e}")
-                self.state = State.ERROR
+        self.state = State.STANDBY
 
     def on_state_read(self) -> State:
         """Returns the current state (called on SDO read of status)."""
@@ -189,6 +160,8 @@ class OresatLiveService(Service):
                 self.capture()
             elif self.state == State.TRANSMISSION:
                 self.transmit()
+            elif self.state == State.TRANSMISSION_TEST:
+                self.transmit_file_test()
 
         else:
             logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")

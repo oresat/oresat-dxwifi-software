@@ -22,6 +22,7 @@
             <button onclick="state_write(State.STANDBY)">STANDBY</button>
             <button onclick="state_write(State.FILMING)">FILMING</button>
             <button onclick="state_write(State.TRANSMISSION)">TRANSMISSION</button>
+            <button onclick="state_write(State.TRANSMISSION_TEST)">TRANSMISSION_TEST</button>
             <button onclick="state_write(State.ERROR)">ERROR</button>
         </div>
     </body>
@@ -33,6 +34,7 @@
             STANDBY: 2,
             FILMING: 3,
             TRANSMISSION: 4,
+            TRANSMISSION_TEST: 5,
             ERROR: 0xFF
         }
 
@@ -62,6 +64,9 @@
                     break;
                 case State.TRANSMISSION:
                     x = "TRANSMISSION"
+                    break;
+                case State.TRANSMISSION_TEST:
+                    x = "TRANSMISSION_TEST"
                     break;
                 case State.ERROR:
                     x = "ERROR"
