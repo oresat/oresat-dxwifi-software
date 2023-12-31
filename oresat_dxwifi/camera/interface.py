@@ -27,9 +27,7 @@ class CameraInterface:
             
     def ready_capture(self):
         self.camera.open(0, apiPreference=cv.CAP_V4L2)
-        logger.info(self.camera.get(cv.CAP_PROP_CODEC_PIXEL_FORMAT))
-        logger.info(self.camera.get(cv.CAP_PROP_FOURCC))
-        #self.camera.set(cv.CAP_PROP_FOURCC, cv.VideoWriter_fourcc('I', 'Y', 'U', 'V'))
+        self.camera.set(cv.CAP_PROP_FOURCC, cv.VideoWriter_fourcc(*"MJPG"))
         self.camera.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
         self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
         self.camera.set(cv.CAP_PROP_FPS, self.fps)
