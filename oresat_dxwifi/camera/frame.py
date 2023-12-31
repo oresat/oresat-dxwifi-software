@@ -30,7 +30,7 @@ class Frame:
         os.remove(file)
     
     def save(self, folder, tar=False):
-        filename = f"camera-{self.timestamp}.png"
+        filename = f"camera-{self.timestamp}.jpg"
 
         filepath = os.path.join(folder, filename)
         self.write_to_file(filepath)
