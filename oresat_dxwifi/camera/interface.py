@@ -1,7 +1,7 @@
 from olaf import logger
 import time, datetime
-from v4l2py.device import VideoCapture, Device, PixelFormat
 from .frame import Frame
+import cv2 as cv
 
 class CameraInterfaceError(Exception):
     """An error has occured with the camera interface"""
@@ -17,7 +17,7 @@ class CameraInterface:
     tar_file: bool
 
     def __init__(self, width, height, fps, output_dir, image_count, delay, tar_file=False):
-        self.camera = Device.from_id(0)
+        self.camera = cv.VideoCapture(0)
         self.width = width
         self.height = height
         self.fps = fps
@@ -34,15 +34,18 @@ class CameraInterface:
         self.camera.controls["hue"].value = 0
             
     def ready_capture(self):
-        capture = VideoCapture(self.camera)
-        capture.set_format(self.width, self.height)
+        self.camera.open(0, apiPreference=cv.CAP_V4L2)
+        self.camera.set(cv.CAP_PROP_FOURCC, cv.VideoWriter_fourcc('M', 'J', 'P', 'G'))
+        self.camera.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
+        self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
+        self.camera.set(cv.CAP_PROP_FPS, self.fps)
 
     def capture_frames(self):
         frames = []
         start = time.monotonic_ns()
         prev = 0
 
-        for frame in self.camera:
+        while True:
             if time.monotonic_ns() - start >= self.delay * 1e9:
                 image_num = len(frames)
                 if image_num >= self.image_count:
@@ -50,7 +53,8 @@ class CameraInterface:
 
                 if time.time() - prev > 1/self.fps:
                     prev = time.time()
-                    frames.append(Frame(frame.data))
+                    ret, frame = self.camera.read()
+                    frames.append(Frame(frame))
                     logger.info(f"Captured image {image_num+1} of {self.image_count}")
                 
                 

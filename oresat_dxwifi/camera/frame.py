@@ -1,11 +1,12 @@
 import os
 import datetime
 import tarfile
+import cv2 as cv
 from olaf import logger
 
 class Frame:
     def __init__(self, data):
-        self.data = self.coerce_to_jpeg(data)
+        self.data = cv.imencode('.png', data)
         self.timestamp = datetime.datetime.utcnow().isoformat()
 
     def coerce_to_jpeg(self, data):
@@ -20,9 +21,7 @@ class Frame:
         return data
 
     def write_to_file(self, filepath):
-        with open(filepath, "wb") as f:
-            f.write(self.data)
-        f.close()
+        cv.imwrite(filepath, self.data)
 
     def tar_and_remove(self, tar_filepath, file, name):
         with tarfile.open(tar_filepath, "w:gz") as tar:
@@ -31,7 +30,7 @@ class Frame:
         os.remove(file)
     
     def save(self, folder, tar=False):
-        filename = f"camera-{self.timestamp}.jpeg"
+        filename = f"camera-{self.timestamp}.png"
 
         filepath = os.path.join(folder, filename)
         self.write_to_file(filepath)
