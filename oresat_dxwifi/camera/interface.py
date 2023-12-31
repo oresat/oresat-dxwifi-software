@@ -77,7 +77,6 @@ class CameraInterface:
 
     def create_images(self):
         logger.info("Starting capture...")
-        self.camera.open()
         self.ready_capture()
         frames = self.capture_frames()
         self.save_frames(frames)
