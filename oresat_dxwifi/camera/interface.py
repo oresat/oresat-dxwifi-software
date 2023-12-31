@@ -31,6 +31,7 @@ class CameraInterface:
         self.camera.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
         self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
         self.camera.set(cv.CAP_PROP_FPS, self.fps)
+        self.camera.set(cv.CAP_PROP_CONVERT_RGB, 1)
 
     def capture_frames(self):
         frames = []
