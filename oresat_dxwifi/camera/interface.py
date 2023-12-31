@@ -15,8 +15,8 @@ class CameraInterface:
     output_dir: str
     tar_file: bool
 
-    def __init__(self, width, height, fps, output_dir, image_count, delay, tar_file=False):
-        self.camera = cv.VideoCapture(0)
+    def __init__(self, device_path, width, height, fps, output_dir, image_count, delay, tar_file=False):
+        self.camera = cv.VideoCapture(device_path)
         self.width = width
         self.height = height
         self.fps = fps

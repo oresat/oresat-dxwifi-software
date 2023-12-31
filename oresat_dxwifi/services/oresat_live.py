@@ -2,7 +2,7 @@
 
 from enum import IntEnum
 from multiprocessing import Process
-import os
+import os, subprocess
 from yaml import safe_load
 
 from olaf import Service, logger
@@ -52,9 +52,21 @@ class OresatLiveService(Service):
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"   # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
 
+        self.DEVICE_PATH = None
+        cam_dev_dir = "/dev/v4l/by-id"
+        for d in os.listdir(cam_dev_dir):
+            dev_path = os.path.join(cam_dev_dir, d)
+            out = subprocess.check_output(["v4l2-ctl", "--device", dev_path,
+                                           "--all"],
+                                          text=True)
+            if "0x04200001" in out:
+                self.DEVICE_PATH = dev_path
+                break
+
         configs = self.load_configs()
 
         self.camera = CameraInterface(
+            self.DEVICE_PATH,
             configs["width"],
             configs["height"],
             configs["fps"],
