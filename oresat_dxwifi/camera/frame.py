@@ -6,7 +6,7 @@ from olaf import logger
 
 class Frame:
     def __init__(self, data):
-        self.data = data
+        self.data = cv.cvtColor(data, cv.COLOR_BGR2RGB)
         self.timestamp = datetime.datetime.utcnow().isoformat()
 
     def coerce_to_jpeg(self, data):
