@@ -7,7 +7,6 @@ class CameraInterfaceError(Exception):
     """An error has occured with the camera interface"""
 
 class CameraInterface:
-    camera: Device
     width:  int
     height: int
     fps:    int
@@ -25,13 +24,6 @@ class CameraInterface:
         self.delay = delay
         self.output_dir = output_dir
         self.tar_file = tar_file
-
-    def update_settings(self):
-        # need to adjust settings to appropriate values
-        self.camera.controls["brightness"].value = 128
-        self.camera.controls["contrast"].value = 32
-        self.camera.controls["saturation"].value = 48
-        self.camera.controls["hue"].value = 0
             
     def ready_capture(self):
         self.camera.open(0, apiPreference=cv.CAP_V4L2)
@@ -83,18 +75,13 @@ class CameraInterface:
         for frame in frames:
             frame.save(self.output_dir, self.tar_file)
 
-    def log_control_values(self):
-        for ctrl in self.camera.controls.values():
-            logger.info(ctrl)
-
     def create_images(self):
         logger.info("Starting capture...")
         self.camera.open()
-        self.update_settings()
         self.ready_capture()
         frames = self.capture_frames()
         self.save_frames(frames)
-        self.camera.close()
+        self.camera.release()
         
 
     
