@@ -37,8 +37,28 @@ class CameraInterface:
         capture = VideoCapture(self.camera)
         capture.set_format(self.width, self.height)
         capture.set_fps(self.fps)
-    
+
     def capture_frames(self):
+        frames = []
+        start = time.monotonic_ns()
+        prev = 0
+
+        for frame in self.camera:
+            if time.monotonic_ns() - start >= self.delay * 1e9:
+                image_num = len(frames)
+                if image_num >= self.image_count:
+                    break
+
+                if time.time() - prev > 1/self.fps:
+                    prev = time.time()
+                    frames.append(Frame(frame.data))
+                    logger.info(f"Captured image {image_num+1} of {self.image_count}")
+                
+                
+        logger.info("Capture complete.")
+        return frames
+    
+    def capture_frames_pause(self):
         frames = []
         start = time.monotonic_ns()
 
