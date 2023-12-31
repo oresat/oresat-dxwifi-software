@@ -15,8 +15,8 @@ class CameraInterface:
     output_dir: str
     tar_file: bool
 
-    def __init__(self, device_path, width, height, fps, output_dir, image_count, delay, tar_file=False):
-        self.camera = cv.VideoCapture(device_path)
+    def __init__(self, width, height, fps, output_dir, image_count, delay, tar_file=False):
+        self.camera = cv.VideoCapture(0)
         self.width = width
         self.height = height
         self.fps = fps
@@ -24,14 +24,14 @@ class CameraInterface:
         self.delay = delay
         self.output_dir = output_dir
         self.tar_file = tar_file
+
             
     def ready_capture(self):
         self.camera.open(0, apiPreference=cv.CAP_V4L2)
-        self.camera.set(cv.CAP_PROP_FOURCC, cv.VideoWriter_fourcc(*"MJPG"))
+        self.camera.set(cv.CAP_PROP_FOURCC, cv.VideoWriter_fourcc('M', 'J', 'P', 'G'))
         self.camera.set(cv.CAP_PROP_FRAME_WIDTH, self.width)
         self.camera.set(cv.CAP_PROP_FRAME_HEIGHT, self.height)
         self.camera.set(cv.CAP_PROP_FPS, self.fps)
-        self.camera.set(cv.CAP_PROP_CONVERT_RGB, 1)
 
     def capture_frames(self):
         frames = []
