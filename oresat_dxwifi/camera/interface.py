@@ -36,7 +36,6 @@ class CameraInterface:
     def ready_capture(self):
         capture = VideoCapture(self.camera)
         capture.set_format(self.width, self.height)
-        capture.set_fps(self.fps)
 
     def capture_frames(self):
         frames = []
