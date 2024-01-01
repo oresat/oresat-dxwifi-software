@@ -30,32 +30,40 @@ class CameraInterface:
         # need to adjust settings to appropriate values
         self.camera.controls["brightness"].value = 128
         self.camera.controls["contrast"].value = 32
-        self.camera.controls["saturation"].value = 64
+        self.camera.controls["saturation"].value = 48
         self.camera.controls["hue"].value = 0
             
     def ready_capture(self):
         capture = VideoCapture(self.camera)
-        capture.set_format(self.width, self.height, PixelFormat.MJPEG)
-        capture.set_fps(self.fps)
+        capture.set_format(self.width, self.height)
 
     def capture_frames(self):
         frames = []
         start = time.monotonic_ns()
+        prev = 0
 
         for frame in self.camera:
             if time.monotonic_ns() - start >= self.delay * 1e9:
-                frames.append(Frame(frame.data))
                 image_num = len(frames)
-                logger.info(f"Captured image {image_num} of {self.image_count}")
                 if image_num >= self.image_count:
                     break
-                time.sleep(1/self.fps)
+
+                if time.time() - prev > 1/self.fps:
+                    prev = time.time()
+                    frames.append(Frame(frame.data))
+                    logger.info(f"Captured image {image_num+1} of {self.image_count}")
+                
+                
         logger.info("Capture complete.")
         return frames
     
     def save_frames(self, frames: [Frame]):
         for frame in frames:
             frame.save(self.output_dir, self.tar_file)
+
+    def log_control_values(self):
+        for ctrl in self.camera.controls.values():
+            logger.info(ctrl)
 
     def create_images(self):
         logger.info("Starting capture...")

@@ -24,9 +24,9 @@ class Frame:
             f.write(self.data)
         f.close()
 
-    def tar_and_remove(self, tar_filepath, file):
-        with tarfile.open(tar_filepath, "w") as tar:
-            tar.add(file)
+    def tar_and_remove(self, tar_filepath, file, name):
+        with tarfile.open(tar_filepath, "w:gz") as tar:
+            tar.add(file, name, recursive=False)
         tar.close()
         os.remove(file)
     
@@ -38,7 +38,7 @@ class Frame:
 
         if tar:
             tar_filepath = os.path.join(folder, f"camera-{self.timestamp}.tar")
-            self.tar_and_remove(tar_filepath, filepath)
+            self.tar_and_remove(tar_filepath, filepath, filename)
             filepath = tar_filepath
 
         logger.info(f"Saved image frame as {filepath}.")
