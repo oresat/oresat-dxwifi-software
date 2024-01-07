@@ -77,6 +77,11 @@ git clone https://github.com/oresat/oresat-libdxwifi.git
 ```
 Build libdxwifi from [instructions](https://github.com/oresat/oresat-libdxwifi#building)
 
+Install the debian packages created from the libdxwifi instructions
+```bash
+sudo dpkg -i *.deb
+```
+
 ## Build oresat_configs
 Clone Repository
 ```bash
