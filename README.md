@@ -54,20 +54,9 @@ Name=mon0
 EOF
 ```
 
-Then exit the root login session:
-```bash
-exit
-```
-
-Next, rename the interface:
-```
-$ sudo iw phy phy0 interface add mon0 type monitor
-$ sudo iw dev wlan0 del
-```
-
 Reboot to ensure the changes are fully applied:
 ```
-$ sudo reboot now
+$ reboot now
 ```
 
 ## Set up source directories
@@ -75,7 +64,7 @@ $ sudo reboot now
 Run the following command on the BBB `oresat-dev` host to clone the repo and set up output directories:
 ```bash
 mkdir /home/debian/src && \
-cd /home/debian/src && \ 
+cd /home/debian/src && \
 git clone https://github.com/oresat/oresat-dxwifi-software.git && \
 sudo mkdir -p /oresat-live-output/{frames, videos}
 ```
