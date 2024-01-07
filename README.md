@@ -66,7 +66,7 @@ Run the following command on the BBB `oresat-dev` host to clone the repo and set
 mkdir /home/debian/src && \
 cd /home/debian/src && \
 git clone https://github.com/oresat/oresat-dxwifi-software.git && \
-sudo mkdir -p /oresat-live-output/{frames, videos}
+sudo mkdir -p /oresat-live-output/{frames,videos}
 ```
 
 ## Build and install libdxwifi
