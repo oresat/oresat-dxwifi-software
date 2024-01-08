@@ -46,9 +46,8 @@ class CameraInterface:
         frames = []
         start = time.monotonic_ns()
         prev = 0
-        brightness = 120
-        contrast = 12
-
+        brightness = 64
+        contrast = 16
 
         for frame in self.camera:
             
@@ -61,16 +60,14 @@ class CameraInterface:
 
                 if time.time() - prev > 1/self.fps:
                     brightness += 1
-                    if brightness == 130:
-                        brightness = 120
-                    if brightness == 120:
-                        contrast += 1
-                        if contrast == 32:
-                            contrast = 12
-
                     
+                    if contrast < 100:
+                        contrast_str = f"0{contrast}"
+                    else:
+                        contrast_str = str(contrast)
+
                     prev = time.time()
-                    f = Frame(frame.data, f"brightness{brightness}-contrast{contrast}")
+                    f = Frame(frame.data, f"brightness{brightness}-contrast{contrast_str}")
                     f.save(self.output_dir, self.tar_file)
                     logger.info(f"Captured image {image_num+1} of {self.image_count}")
                 
