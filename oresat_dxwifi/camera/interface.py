@@ -67,7 +67,7 @@ class CameraInterface:
                     brightness += 1
                     brightness %= 256
                     prev = time.time()
-                    frames.append(Frame(frame.data, f"brightness{brightness}-contrast{constrast}"))
+                    frames.append(Frame(frame.data, f"brightness{brightness}-contrast{contrast}"))
                     logger.info(f"Captured image {image_num+1} of {self.image_count}")
                     count+=1
                 
