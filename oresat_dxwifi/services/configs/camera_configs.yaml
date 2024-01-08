@@ -2,7 +2,7 @@
 delay: 0.8
 image_count: 1
 as_tar_file: True
-width: 640
-height: 480
+width: 1280
+height: 960
 fps: 5
 bit_rate: 100
