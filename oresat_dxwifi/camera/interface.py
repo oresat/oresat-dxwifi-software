@@ -29,7 +29,7 @@ class CameraInterface:
     def update_settings(self):
         # need to adjust settings to appropriate values
         self.camera.controls["brightness"].value = 192
-        self.camera.controls["contrast"].value = 24
+        self.camera.controls["contrast"].value = 20
         self.camera.controls["saturation"].value = 48
         self.camera.controls["hue"].value = 0
         self.camera.controls["gamma"].value = 5
