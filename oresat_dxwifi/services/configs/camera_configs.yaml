@@ -1,7 +1,7 @@
 
 delay: 0.8
 image_count: 1
-as_tar_file: True
+as_tar_file: False
 width: 1920
 height: 1080
 fps: 5
