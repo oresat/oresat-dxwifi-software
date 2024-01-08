@@ -1,5 +1,5 @@
 from olaf import logger
-import time, datetime
+import time, os, shutil
 from v4l2py.device import VideoCapture, Device, PixelFormat
 from .frame import Frame
 
@@ -66,7 +66,27 @@ class CameraInterface:
         for ctrl in self.camera.controls.values():
             logger.info(ctrl)
 
+    def clean_dir(self, path):
+        if os.path.exists(path):
+            for f in os.listdir(path):
+                p = os.path.join(path, f)
+                try:
+                    shutil.rmtree(p)
+                    logger.info(f"Removed directory: {f}")
+                except OSError:
+                    os.remove(p)
+                    logger.info(f"Removed file: {f}")
+            logger.info(f"Cleaned directory: {path}")
+        else:
+            os.mkdir(path)
+            logger.info("Created new directory: {}".format(path))
+
     def create_images(self):
+        try:
+            self.clean_dir(self.output_dir)
+        except Exception as e:
+            raise CameraInterfaceError(e)
+        
         logger.info("Starting capture...")
         self.camera.open()
         self.update_settings()
