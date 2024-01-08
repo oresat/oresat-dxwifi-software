@@ -28,10 +28,11 @@ class CameraInterface:
 
     def update_settings(self):
         # need to adjust settings to appropriate values
-        self.camera.controls["brightness"].value = 128
-        self.camera.controls["contrast"].value = 32
+        self.camera.controls["brightness"].value = 192
+        self.camera.controls["contrast"].value = 16
         self.camera.controls["saturation"].value = 48
         self.camera.controls["hue"].value = 0
+        self.camera.controls["gamma"].value = 5
             
     def ready_capture(self):
         capture = VideoCapture(self.camera)
@@ -70,6 +71,7 @@ class CameraInterface:
         self.camera.open()
         self.update_settings()
         self.ready_capture()
+        self.log_control_values()
         frames = self.capture_frames()
         self.save_frames(frames)
         self.camera.close()
