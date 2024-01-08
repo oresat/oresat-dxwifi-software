@@ -46,8 +46,8 @@ class CameraInterface:
         frames = []
         start = time.monotonic_ns()
         prev = 0
-        brightness = 0
-        contrast = 0
+        brightness = 120
+        contrast = 12
 
 
         for frame in self.camera:
@@ -60,10 +60,13 @@ class CameraInterface:
                     break
 
                 if time.time() - prev > 1/self.fps:
-                    brightness += 4
-                    brightness %= 256
-                    if brightness == 0:
-                        contrast += 4
+                    brightness += 1
+                    if brightness == 130:
+                        brightness = 120
+                    if brightness == 120:
+                        contrast += 1
+                        if contrast == 32:
+                            contrast = 12
 
                     
                     prev = time.time()
