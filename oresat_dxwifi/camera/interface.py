@@ -32,6 +32,7 @@ class CameraInterface:
         self.camera.controls["contrast"].value = 16
         self.camera.controls["saturation"].value = 48
         self.camera.controls["hue"].value = 0
+        self.camera.controls["gamma"].value = 9
             
     def ready_capture(self):
         capture = VideoCapture(self.camera)
