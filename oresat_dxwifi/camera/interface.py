@@ -46,8 +46,9 @@ class CameraInterface:
         frames = []
         start = time.monotonic_ns()
         prev = 0
-        brightness = 64
+        brightness = 148
         contrast = 16
+        gamma = 1
 
         for frame in self.camera:
             
@@ -59,17 +60,15 @@ class CameraInterface:
                     break
 
                 if time.time() - prev > 1/self.fps:
-                    brightness += 1
-                    
-                    if brightness < 100:
-                        brightness_str = f"0{brightness}"
-                    else:
-                        brightness_str = str(brightness)
+                    self.camera.controls["gamma"].value = gamma
 
                     prev = time.time()
-                    f = Frame(frame.data, f"brightness{brightness_str}-contrast{contrast}")
+                    f = Frame(frame.data, f"gamma{gamma}")
                     f.save(self.output_dir, self.tar_file)
                     logger.info(f"Captured image {image_num+1} of {self.image_count}")
+                    if gamma == 9:
+                        break
+                    gamma += 1
                 
                 
         logger.info("Capture complete.")
