@@ -1,6 +1,6 @@
 
 delay: 0.8
-image_count: 16384
+image_count: 1024
 as_tar_file: False
 width: 1920
 height: 1080

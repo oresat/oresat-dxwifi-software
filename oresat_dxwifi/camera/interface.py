@@ -62,12 +62,13 @@ class CameraInterface:
 
                 if time.time() - prev > 1/self.fps:
                     if count % 256 == 0:
-                        contrast += 1
+                        contrast += 4
                 
-                    brightness += 1
+                    brightness += 4
                     brightness %= 256
                     prev = time.time()
-                    frames.append(Frame(frame.data, f"brightness{brightness}-contrast{contrast}"))
+                    f = Frame(frame.data, f"brightness{brightness}-contrast{contrast}")
+                    f.save(self.output_dir, self.tar_file)
                     logger.info(f"Captured image {image_num+1} of {self.image_count}")
                     count+=1
                 
