@@ -4,7 +4,8 @@ import tarfile
 from olaf import logger
 
 class Frame:
-    def __init__(self, data):
+    def __init__(self, data, name):
+        self.name = name
         self.data = self.coerce_to_jpeg(data)
         self.timestamp = datetime.datetime.utcnow().isoformat()
 
@@ -31,7 +32,7 @@ class Frame:
         os.remove(file)
     
     def save(self, folder, tar=False):
-        filename = f"camera-{self.timestamp}.jpeg"
+        filename = f"camera-{self.name}.jpeg"
 
         filepath = os.path.join(folder, filename)
         self.write_to_file(filepath)

@@ -33,6 +33,10 @@ class CameraInterface:
         self.camera.controls["saturation"].value = 48
         self.camera.controls["hue"].value = 0
         self.camera.controls["gamma"].value = 5
+
+    def update_brightness_contrast(self, brightness, contrast):
+        self.camera.controls["brightness"].value = brightness
+        self.camera.controls["contrast"].value = contrast
             
     def ready_capture(self):
         capture = VideoCapture(self.camera)
@@ -42,17 +46,30 @@ class CameraInterface:
         frames = []
         start = time.monotonic_ns()
         prev = 0
+        brightness = 0
+        contrast = 0
+        count = 0
+
 
         for frame in self.camera:
+            
             if time.monotonic_ns() - start >= self.delay * 1e9:
+                self.update_brightness_contrast(brightness, contrast)
+                
                 image_num = len(frames)
                 if image_num >= self.image_count:
                     break
 
                 if time.time() - prev > 1/self.fps:
+                    if count % 256 == 0:
+                        contrast += 1
+                
+                    brightness += 1
+                    brightness %= 256
                     prev = time.time()
-                    frames.append(Frame(frame.data))
+                    frames.append(Frame(frame.data, f"brightness{brightness}-contrast{constrast}"))
                     logger.info(f"Captured image {image_num+1} of {self.image_count}")
+                    count+=1
                 
                 
         logger.info("Capture complete.")
