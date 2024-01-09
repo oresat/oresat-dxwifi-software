@@ -2,7 +2,7 @@
 
 from enum import IntEnum
 from multiprocessing import Process
-import os
+import os, subprocess, time
 from yaml import safe_load
 
 from olaf import Service, logger
@@ -16,7 +16,6 @@ class State(IntEnum):
     STANDBY = 2
     FILMING = 3
     TRANSMISSION = 4
-    TRANSMISSION_TEST = 5
     ERROR = 0xFF
 
 
@@ -33,10 +32,9 @@ class State(IntEnum):
 STATE_TRANSITIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.FILMING, State.TRANSMISSION, State.TRANSMISSION_TEST],
+    State.STANDBY: [State.FILMING, State.TRANSMISSION],
     State.FILMING: [State.STANDBY, State.ERROR],
     State.TRANSMISSION: [State.STANDBY, State.ERROR],
-    State.TRANSMISSION_TEST: [State.STANDBY, State.ERROR],
     State.ERROR: [State.STANDBY],
 }
 
@@ -49,6 +47,9 @@ class OresatLiveService(Service):
         super().__init__()
         self.state = State.BOOT
 
+        self.firmware_folder = "/lib/firmware/ath9k_htc"
+        self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
+        
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"   # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
 
@@ -57,11 +58,7 @@ class OresatLiveService(Service):
         self.camera = CameraInterface(
             configs["width"],
             configs["height"],
-            configs["fps"],
             self.IMAGE_OUPUT_DIRECTORY,
-            configs["image_count"],
-            configs["delay"],
-            configs["as_tar_file"]
         )
 
     def load_configs(self):
@@ -86,6 +83,37 @@ class OresatLiveService(Service):
             read_cb=self.on_state_read,
             write_cb=self.on_state_write,
         )
+        
+        self.add_transmission_sdos()
+
+    def add_transmission_sdos(self):
+        self.node.add_sdo_callbacks(
+            "transmission",
+            subindex="bit_rate",
+            read_cb=self.get_bit_rate,
+            write_cb=self.update_bit_rate
+        )
+
+    def get_bit_rate(self):
+        fw_file = subprocess.check_output(["readlink", self.firmware_file]).decode('ascii')
+        return int(fw_file.split(".")[0])
+    
+    def update_bit_rate(self, value: int):
+        valid_rates = [1, 2, 5, 11, 12, 18, 36, 48, 54]
+
+        if value not in valid_rates:
+            logger.warn(f"Bit rate of {value} is not valid. Valid Values: {valid_rates}")
+            return
+
+        if self.get_bit_rate() == value:
+            logger.info(f"Bit rate is already set to {value}")
+            return
+        
+        subprocess.call(["ln", "-sf", f"{value}.fw", self.firmware_file])
+        subprocess.call(["rmmod", "ath9k_htc"])
+        subprocess.call(["modprobe", "ath9k-htc"])
+        time.sleep(2)
+        subprocess.call(["startmonitor"])
 
     def on_end(self) -> None:
         """Sets status state to OFF"""
@@ -96,7 +124,7 @@ class OresatLiveService(Service):
         self.state = State.FILMING
 
         try:
-            self.camera.create_images()
+            self.camera.create_images(self.node.od["capture"], self.node.od["transmission"]["as_tar"].value)
             self.state = State.STANDBY
         except Exception as error:
             self.state = State.ERROR
@@ -114,10 +142,12 @@ class OresatLiveService(Service):
             logger.error(f"Unable to transmit {filestr} due to {e}")
             self.state = State.ERROR
 
+        self.node.od["transmission"]["images_transmitted"].value += 1
+
     def transmit_file_test(self) -> None:
         """Transmits all the videos in the video output directory."""
-        self.state = State.TRANSMISSION_TEST
-        self.transmit_file("/home/debian/src/oresat-dxwifi-software/oresat_dxwifi/services/static/TheHobbit.epub")
+        self.state = State.TRANSMISSION
+        self.transmit_file("/home/debian/src/oresat-dxwifi-software/oresat_dxwifi/services/static/SMPTE_Color_Bars.gif")
         self.state = State.STANDBY
 
     def transmit(self) -> None:
@@ -141,7 +171,7 @@ class OresatLiveService(Service):
 
         Args:
             data (int): 1: OFF, 2: BOOT, 3: STANDBY, 4: FILMING,
-                        5: TRANSMISSION, 0xFF: ERROR
+                5: TRANSMISSION, 0xFF: ERROR
         """
         try:
             new_state = State(data)
@@ -158,9 +188,10 @@ class OresatLiveService(Service):
             if self.state == State.FILMING:
                 self.capture()
             elif self.state == State.TRANSMISSION:
-                self.transmit()
-            elif self.state == State.TRANSMISSION_TEST:
-                self.transmit_file_test()
+                if self.node.od["transmission"]["static_image"].value:
+                    self.transmit_file_test()
+                else:
+                    self.transmit()
 
         else:
             logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")

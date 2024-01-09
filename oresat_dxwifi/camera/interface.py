@@ -14,45 +14,39 @@ class CameraInterface:
     image_count: int
     delay: float
     output_dir: str
-    tar_file: bool
 
-    def __init__(self, width, height, fps, output_dir, image_count, delay, tar_file=False):
+    def __init__(self, width, height, output_dir):
         self.camera = Device.from_id(0)
         self.width = width
         self.height = height
-        self.fps = fps
-        self.image_count = image_count
-        self.delay = delay
         self.output_dir = output_dir
-        self.tar_file = tar_file
 
-    def update_settings(self):
-        # need to adjust settings to appropriate values
-        self.camera.controls["brightness"].value = 192
-        self.camera.controls["contrast"].value = 16
-        self.camera.controls["saturation"].value = 48
-        self.camera.controls["hue"].value = 0
-        self.camera.controls["gamma"].value = 5
+    def update_settings(self, val_dict):
+        self.camera.controls["brightness"].value = val_dict["brightness"].value
+        self.camera.controls["contrast"].value = val_dict["contrast"].value
+        self.camera.controls["saturation"].value = val_dict["saturation"].value
+        self.camera.controls["hue"].value = val_dict["hue"].value
+        self.camera.controls["gamma"].value = val_dict["gamma"].value
             
     def ready_capture(self):
         capture = VideoCapture(self.camera)
         capture.set_format(self.width, self.height)
 
-    def capture_frames(self):
+    def capture_frames(self, image_count, delay, fps):
         frames = []
         start = time.monotonic_ns()
         prev = 0
 
         for frame in self.camera:
-            if time.monotonic_ns() - start >= self.delay * 1e9:
+            if time.monotonic_ns() - start >= delay * 1e6:
                 image_num = len(frames)
-                if image_num >= self.image_count:
+                if image_num >= image_count:
                     break
 
-                if time.time() - prev > 1/self.fps:
+                if time.time() - prev > 1/fps:
                     prev = time.time()
                     frames.append(Frame(frame.data))
-                    logger.info(f"Captured image {image_num+1} of {self.image_count}")
+                    logger.info(f"Captured image {image_num+1} of {image_count}")
                 
                 
         logger.info("Capture complete.")
@@ -81,7 +75,7 @@ class CameraInterface:
             os.mkdir(path)
             logger.info("Created new directory: {}".format(path))
 
-    def create_images(self):
+    def create_images(self, obj_dict, as_tar):
         try:
             self.clean_dir(self.output_dir)
         except Exception as e:
@@ -89,10 +83,10 @@ class CameraInterface:
         
         logger.info("Starting capture...")
         self.camera.open()
-        self.update_settings()
+        self.update_settings(obj_dict)
+        self.tar_file = as_tar
         self.ready_capture()
-        self.log_control_values()
-        frames = self.capture_frames()
+        frames = self.capture_frames(obj_dict["image_amount"].value, obj_dict["delay"].value, obj_dict["fps"].value)
         self.save_frames(frames)
         self.camera.close()
         

@@ -15,9 +15,6 @@ class Transmitter:
         Args:
             directory (str): Path of directory with videos to transmit
         """
-        self.firmware_folder = "/lib/firmware/ath9k_htc"
-        #    self.update_bit_rate(11)
-        self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
         self.target_dir_or_file = directory
         self.load_configs()
 
@@ -145,27 +142,8 @@ class Transmitter:
         return tx_cmd
 
     def transmit(self) -> None:
-        if not self.check_bit_rate(11):
-            self.update_bit_rate(11)
         tx_module.main_wrapper(self.configure_transmission())
 
 
-    def check_bit_rate(self, value):
-        logger.info(self.firmware_file)
-        fw_file = subprocess.check_output(["readlink", self.firmware_file]).decode('ascii')
-        
-        logger.info(f"firmware file: {fw_file}")
-
-        bit_rate = int(fw_file.split(".")[0])
-
-        logger.info(f"bit_rate: {bit_rate}")
-
-        return bit_rate == value
     
-    def update_bit_rate(self, value):
-        subprocess.call(["ln", "-sf", f"{value}.fw", self.firmware_file])
-        subprocess.call(["rmmod", "ath9k_htc"])
-        subprocess.call(["modprobe", "ath9k-htc"])
-        time.sleep(2)
-        subprocess.call(["startmonitor"])
 
