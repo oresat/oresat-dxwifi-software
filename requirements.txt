@@ -3,3 +3,4 @@ flake8
 oresat-olaf>=3.0.0
 oresat-configs
 pyyaml
+v4l2py==2.1.0
