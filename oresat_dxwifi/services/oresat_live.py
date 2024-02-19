@@ -133,7 +133,7 @@ class OresatLiveService(Service):
 
     def transmit_file(self, filestr) -> None:
         try:
-            tx = Transmitter(filestr)
+            tx = Transmitter(filestr, self.node.od["transmission"]["enable_pa"].value)
             logger.info(f'Transmitting {filestr}...')
             p = Process(target=tx.transmit)
             p.start()
