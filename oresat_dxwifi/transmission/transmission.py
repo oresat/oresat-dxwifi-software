@@ -9,13 +9,14 @@ from . import tx_module
 #
 # @TODO Clean up. Use task-specific function bindings and stop wrapping main().
 class Transmitter:
-    def __init__(self, directory: str) -> None:
+    def __init__(self, directory: str, enable_pa: bool) -> None:
         """Initializes transmission configuration.
 
         Args:
             directory (str): Path of directory with videos to transmit
         """
         self.target_dir_or_file = directory
+        self.enable_pa = enable_pa
         self.load_configs()
 
     def load_configs(self) -> None:
@@ -33,7 +34,6 @@ class Transmitter:
         self.daemon_used = configs["daemon_used"]
 
         self.error_rate = configs["error_rate"]
-        self.enable_pa = configs["enable_pa"]
 
         self.file_delay = configs["file_delay"]
 
