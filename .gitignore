@@ -154,3 +154,12 @@ oresat_dxwifi/camera/data/*
 
 # Ignore .deb build targets
 oresat-dxwifi-software-server-*
+
+# Vim
+*.swp
+
+# MacOS
+.DS_Store
+
+# setuptools-scm
+_version.py

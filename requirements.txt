@@ -1,5 +1,9 @@
+black
 build
-flake8
-oresat-olaf>=3.0.0
+build
+isort
 oresat-configs
-pyyaml
+oresat-olaf>=3.0.0
+pylama[all]
+setuptools
+setuptools-scm
