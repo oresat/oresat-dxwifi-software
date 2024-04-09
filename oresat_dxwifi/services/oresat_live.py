@@ -147,7 +147,8 @@ class OresatLiveService(Service):
     def transmit_file_test(self) -> None:
         """Transmits all the videos in the video output directory."""
         self.state = State.TRANSMISSION
-        self.transmit_file("/home/debian/src/oresat-dxwifi-software/oresat_dxwifi/services/static/SMPTE_Color_Bars.gif")
+        cur_dir = os.path.dirname(os.path.realpath(__file__))
+        self.transmit_file(os.path.join(cur_dir, "static/SMPTE_Color_Bars.gif"))
         self.state = State.STANDBY
 
     def transmit(self) -> None:
