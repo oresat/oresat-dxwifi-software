@@ -2,12 +2,11 @@
 
 from enum import IntEnum
 from multiprocessing import Process
-import os
-import subprocess
+import os, subprocess, time
 from yaml import safe_load
 
 from olaf import Service, logger
-from ..camera.camera import CameraInterface
+from ..camera.interface import CameraInterface
 from ..transmission.transmission import Transmitter
 
 
@@ -48,56 +47,29 @@ class OresatLiveService(Service):
         super().__init__()
         self.state = State.BOOT
 
+        self.firmware_folder = "/lib/firmware/ath9k_htc"
+        self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
+        
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"   # Make sure directory exists
         self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
 
-        dirname = os.path.dirname(os.path.abspath(__file__))
-        self.C_BINARY_PATH = f"{dirname}/../camera/bin/capture"
-
-        # Get the first capable camera device in /dev/v4l/by-id
-        # TODO: Remove default in CameraInterface?
-        self.DEVICE_PATH = None
-        cam_dev_dir = "/dev/v4l/by-id"
-        for d in os.listdir(cam_dev_dir):
-            dev_path = os.path.join(cam_dev_dir, d)
-            out = subprocess.check_output(["v4l2-ctl", "--device", dev_path,
-                                           "--all"],
-                                          text=True)
-            if "0x04200001" in out:
-                self.DEVICE_PATH = dev_path
-                break
-
-        self.load_configs()
+        configs = self.load_configs()
 
         self.camera = CameraInterface(
-            self.spv,
-            self.duration,
+            configs["width"],
+            configs["height"],
             self.IMAGE_OUPUT_DIRECTORY,
-            self.VIDEO_OUTPUT_DIRECTORY,
-            self.C_BINARY_PATH,
-            self.DEVICE_PATH,
-            self.x_pixel_resolution,
-            self.y_pixel_resolution,
-            self.fps,
-            self.br,
-            self.are_frames_deleted,
         )
 
-    def load_configs(self) -> None:
+    def load_configs(self):
         """Loads the camera configs from the YAML file"""
         dirname = os.path.dirname(os.path.abspath(__file__))
         cfg_path = os.path.join(dirname, "configs", "camera_configs.yaml")
 
         with open(cfg_path, "r") as config_file:
             configs = safe_load(config_file)
-
-        self.spv = configs["seconds_per_video"]
-        self.duration = configs["number_of_videos"] * self.spv
-        self.x_pixel_resolution = configs["x_resolution"]
-        self.y_pixel_resolution = configs["y_resolution"]
-        self.fps = configs["frames_per_second"]
-        self.br = configs["bit_rate"]
-        self.are_frames_deleted = configs["delete_frames"]
+        config_file.close()
+        return configs
 
     def on_start(self) -> None:
         """Adds SDO callbacks for reading and writing status state"""
@@ -111,6 +83,37 @@ class OresatLiveService(Service):
             read_cb=self.on_state_read,
             write_cb=self.on_state_write,
         )
+        
+        self.add_transmission_sdos()
+
+    def add_transmission_sdos(self):
+        self.node.add_sdo_callbacks(
+            "transmission",
+            subindex="bit_rate",
+            read_cb=self.get_bit_rate,
+            write_cb=self.update_bit_rate
+        )
+
+    def get_bit_rate(self):
+        fw_file = subprocess.check_output(["readlink", self.firmware_file]).decode('ascii')
+        return int(fw_file.split(".")[0])
+    
+    def update_bit_rate(self, value: int):
+        valid_rates = [1, 2, 5, 11, 12, 18, 36, 48, 54]
+
+        if value not in valid_rates:
+            logger.warn(f"Bit rate of {value} is not valid. Valid Values: {valid_rates}")
+            return
+
+        if self.get_bit_rate() == value:
+            logger.info(f"Bit rate is already set to {value}")
+            return
+        
+        subprocess.call(["ln", "-sf", f"{value}.fw", self.firmware_file])
+        subprocess.call(["rmmod", "ath9k_htc"])
+        subprocess.call(["modprobe", "ath9k-htc"])
+        time.sleep(2)
+        subprocess.call(["startmonitor"])
 
     def on_end(self) -> None:
         """Sets status state to OFF"""
@@ -121,44 +124,44 @@ class OresatLiveService(Service):
         self.state = State.FILMING
 
         try:
-            self.camera.create_videos()
+            self.camera.create_images(self.node.od["capture"], self.node.od["transmission"]["as_tar"].value)
             self.state = State.STANDBY
         except Exception as error:
             self.state = State.ERROR
             logger.error("Something went wrong with camera capture...")
             logger.error(error)
 
+    def transmit_file(self, filestr) -> None:
+        try:
+            tx = Transmitter(filestr, self.node.od["transmission"]["enable_pa"].value)
+            logger.info(f'Transmitting {filestr}...')
+            p = Process(target=tx.transmit)
+            p.start()
+            p.join()
+        except Exception as e:
+            logger.error(f"Unable to transmit {filestr} due to {e}")
+            self.state = State.ERROR
+
+        self.node.od["transmission"]["images_transmitted"].value += 1
+
+    def transmit_file_test(self) -> None:
+        """Transmits all the videos in the video output directory."""
+        self.state = State.TRANSMISSION
+        cur_dir = os.path.dirname(os.path.realpath(__file__))
+        self.transmit_file(os.path.join(cur_dir, "static/SMPTE_Color_Bars.gif"))
+        self.state = State.STANDBY
+
     def transmit(self) -> None:
         """Transmits all the videos in the video output directory."""
         self.state = State.TRANSMISSION
 
-        files = os.listdir(self.VIDEO_OUTPUT_DIRECTORY)
+        files = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
 
-        # Ideally, we could just pass the output directory path to the
-        # Transmitter. However, in practice, multi-file transmission to a
-        # multi-file receiver has been inconsistent. This loop is a workaround.
-        #
-        # @TODO Diagnose and fix inconsistency, and then use directory-mode tx.
+        for f in files:
+            f = os.path.join(self.IMAGE_OUPUT_DIRECTORY, f)
+            self.transmit_file(f)
 
-        for x in files:
-            x = os.path.join(self.VIDEO_OUTPUT_DIRECTORY, x)
-            try:
-                tx = Transmitter(x)
-
-                # Transmission seems to crash dxwifi if we don't run it in a
-                # separate process. The transmission still goes through during
-                # the crash, and transmission by itself seems to work just
-                # fine.
-                #
-                # @TODO Find root cause and fix.IMAGE_OUPUT
-                logger.info(f'Transmitting {x}...')
-                p = Process(target=tx.transmit)
-                p.start()
-                p.join()
-                self.state = State.STANDBY
-            except Exception as e:
-                logger.error(f"Unable to transmit {x} due to {e}")
-                self.state = State.ERROR
+        self.state = State.STANDBY
 
     def on_state_read(self) -> State:
         """Returns the current state (called on SDO read of status)."""
@@ -169,7 +172,7 @@ class OresatLiveService(Service):
 
         Args:
             data (int): 1: OFF, 2: BOOT, 3: STANDBY, 4: FILMING,
-                        5: TRANSMISSION, 0xFF: ERROR
+                5: TRANSMISSION, 0xFF: ERROR
         """
         try:
             new_state = State(data)
@@ -186,7 +189,10 @@ class OresatLiveService(Service):
             if self.state == State.FILMING:
                 self.capture()
             elif self.state == State.TRANSMISSION:
-                self.transmit()
+                if self.node.od["transmission"]["static_image"].value:
+                    self.transmit_file_test()
+                else:
+                    self.transmit()
 
         else:
             logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")

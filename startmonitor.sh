@@ -19,7 +19,6 @@ trap 'last_command=$current_command; current_command=$BASH_COMMAND' DEBUG
 # echo message before exiting
 trap cleanup EXIT
 dev=${1:-mon0}
-ifconfig $dev up;
 ip link set $dev down
 iw dev $dev set monitor fcsfail otherbss
 ip link set $dev up

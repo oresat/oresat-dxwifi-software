@@ -1,10 +1,8 @@
----
-# @TODO Document options (even though mostly self-explanatory)
-seconds_per_video: 3
-number_of_videos: 3
 
-x_resolution: 640
-y_resolution: 480
-frames_per_second: 10
+delay: 0.8
+image_count: 1
+as_tar_file: False
+width: 1920
+height: 1080
+fps: 5
 bit_rate: 100
-delete_frames: False

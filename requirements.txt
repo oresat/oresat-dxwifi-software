@@ -1,8 +1,9 @@
 black
 build
-build
 isort
 oresat-configs
+pyyaml[all]
+v4l2py==2.1.0
 oresat-olaf>=3.0.0
 pylama[all]
 setuptools

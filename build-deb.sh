@@ -2,7 +2,7 @@
 set -x
 
 PKG_NAME="oresat-dxwifi-software-server"
-PKG_VERS="0.0.0.4"
+PKG_VERS="0.0.0.6"
 VCAN_SERVICE="oresat-vcan-iface.service"
 MON_SERVICE="oresat-mon-iface.service"
 

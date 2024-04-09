@@ -7,7 +7,6 @@ code_rate: 0.667
 daemon_used: False
 
 error_rate: 0
-enable_pa: False
 
 file_delay: 0
 packet_loss: 0
