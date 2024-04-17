@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Software Development :: Embedded Systems",
 ]
 dependencies = [
-    "oresat-config",
+    "oresat-configs",
     "oresat-olaf>=3.0.0",
 ]
 dynamic = ["version"]
