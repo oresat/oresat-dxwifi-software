@@ -22,6 +22,7 @@ classifiers = [
 dependencies = [
     "oresat-configs",
     "oresat-olaf>=3.0.0",
+    "v4l2py==2.1.0",
 ]
 dynamic = ["version"]
 
