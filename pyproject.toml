@@ -27,7 +27,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.scripts]
-oresat-c3 = "oresat_dxwifi.__main__:main"
+oresat-dxwifi = "oresat_dxwifi.__main__:main"
 
 [tool.setuptools.packages.find]
 exclude = ["docs*"]
