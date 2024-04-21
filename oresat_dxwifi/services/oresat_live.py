@@ -16,6 +16,7 @@ class State(IntEnum):
     STANDBY = 2
     FILMING = 3
     TRANSMISSION = 4
+    PURGE = 5
     ERROR = 0xFF
 
 
@@ -32,9 +33,10 @@ class State(IntEnum):
 STATE_TRANSITIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.FILMING, State.TRANSMISSION],
+    State.STANDBY: [State.FILMING, State.TRANSMISSION, State.PURGE],
     State.FILMING: [State.STANDBY, State.ERROR],
     State.TRANSMISSION: [State.STANDBY, State.ERROR],
+    State.PURGE: [State.STANDBY],
     State.ERROR: [State.STANDBY],
 }
 
@@ -166,6 +168,17 @@ class OresatLiveService(Service):
 
         self.state = State.STANDBY
 
+    def purge(self) -> None:
+        """Deletes all the files in the image directory"""
+        self.state = State.PURGE
+
+        files = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
+        for f in files:
+            f = os.path.join(self.IMAGE_OUPUT_DIRECTORY, f)
+            os.unlink(f)
+
+        self.state = State.STANDBY
+
     def on_state_read(self) -> State:
         """Returns the current state (called on SDO read of status)."""
         return self.state.value
@@ -196,6 +209,8 @@ class OresatLiveService(Service):
                     self.transmit_file_test()
                 else:
                     self.transmit()
+            elif self.state == State.PURGE:
+                self.purge()
 
         else:
             logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")
