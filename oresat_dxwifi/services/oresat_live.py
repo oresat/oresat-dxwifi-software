@@ -16,6 +16,7 @@ class State(IntEnum):
     STANDBY = 2
     FILMING = 3
     TRANSMISSION = 4
+    PURGE = 5
     ERROR = 0xFF
 
 
@@ -32,9 +33,10 @@ class State(IntEnum):
 STATE_TRANSITIONS = {
     State.OFF: [State.BOOT],
     State.BOOT: [State.STANDBY],
-    State.STANDBY: [State.FILMING, State.TRANSMISSION],
+    State.STANDBY: [State.FILMING, State.TRANSMISSION, State.PURGE],
     State.FILMING: [State.STANDBY, State.ERROR],
     State.TRANSMISSION: [State.STANDBY, State.ERROR],
+    State.PURGE: [State.STANDBY],
     State.ERROR: [State.STANDBY],
 }
 
@@ -95,10 +97,12 @@ class OresatLiveService(Service):
         )
 
     def get_bit_rate(self):
+        """returns the given bit rate of the transmission"""
         fw_file = subprocess.check_output(["readlink", self.firmware_file]).decode('ascii')
         return int(fw_file.split(".")[0])
     
     def update_bit_rate(self, value: int):
+        """Update the bit rate (by way of firmware blobs) of the transmission"""
         valid_rates = [1, 2, 5, 11, 12, 18, 36, 48, 54]
 
         if value not in valid_rates:
@@ -120,7 +124,7 @@ class OresatLiveService(Service):
         self.state = State.OFF
 
     def capture(self) -> None:
-        """Facilitates video capture and the corresponding state changes"""
+        """Facilitates image capture and the corresponding state changes"""
         self.state = State.FILMING
 
         try:
@@ -132,6 +136,7 @@ class OresatLiveService(Service):
             logger.error(error)
 
     def transmit_file(self, filestr) -> None:
+        """Transmit file at given path string"""
         try:
             tx = Transmitter(filestr, self.node.od["transmission"]["enable_pa"].value)
             logger.info(f'Transmitting {filestr}...')
@@ -145,14 +150,14 @@ class OresatLiveService(Service):
         self.node.od["transmission"]["images_transmitted"].value += 1
 
     def transmit_file_test(self) -> None:
-        """Transmits all the videos in the video output directory."""
+        """Transmits the static color bars image"""
         self.state = State.TRANSMISSION
         cur_dir = os.path.dirname(os.path.realpath(__file__))
         self.transmit_file(os.path.join(cur_dir, "static/SMPTE_Color_Bars.gif"))
         self.state = State.STANDBY
 
     def transmit(self) -> None:
-        """Transmits all the videos in the video output directory."""
+        """Transmits all the images in the image output directory."""
         self.state = State.TRANSMISSION
 
         files = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
@@ -160,6 +165,17 @@ class OresatLiveService(Service):
         for f in files:
             f = os.path.join(self.IMAGE_OUPUT_DIRECTORY, f)
             self.transmit_file(f)
+
+        self.state = State.STANDBY
+
+    def purge(self) -> None:
+        """Deletes all the files in the image directory"""
+        self.state = State.PURGE
+
+        files = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
+        for f in files:
+            f = os.path.join(self.IMAGE_OUPUT_DIRECTORY, f)
+            os.unlink(f)
 
         self.state = State.STANDBY
 
@@ -193,6 +209,8 @@ class OresatLiveService(Service):
                     self.transmit_file_test()
                 else:
                     self.transmit()
+            elif self.state == State.PURGE:
+                self.purge()
 
         else:
             logger.error(f"Invalid state change: {self.state.name} -> {new_state.name}")

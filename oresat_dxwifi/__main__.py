@@ -18,7 +18,7 @@ def oresat_live_template():
 def main():
     """DxWiFi OLAF app main"""
 
-    args, _ = olaf_setup(NodeId.DXWIFI)
+    args, _ = olaf_setup("dxwifi")
     mock_args = [i.lower() for i in args.mock_hw]
     mock_radio = "radio" in mock_args or "all" in mock_args
 
