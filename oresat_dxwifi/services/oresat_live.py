@@ -49,6 +49,9 @@ class OresatLiveService(Service):
         super().__init__()
         self.state = State.BOOT
 
+        # start mon0
+        subprocess.call(["startmonitor.sh"])
+
         self.firmware_folder = "/lib/firmware/ath9k_htc"
         self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
         
@@ -119,7 +122,7 @@ class OresatLiveService(Service):
         subprocess.call(["rmmod", "ath9k_htc"])
         subprocess.call(["modprobe", "ath9k-htc"])
         time.sleep(2)
-        subprocess.call(["startmonitor"])
+        subprocess.call(["startmonitor.sh"])
 
     def on_end(self) -> None:
         """Sets status state to OFF"""
