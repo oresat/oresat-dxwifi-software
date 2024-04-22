@@ -52,8 +52,10 @@ class OresatLiveService(Service):
         self.firmware_folder = "/lib/firmware/ath9k_htc"
         self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
         
-        self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"   # Make sure directory exists
-        self.VIDEO_OUTPUT_DIRECTORY = "/oresat-live-output/videos"  # Make sure directory exists
+        self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"
+
+        if not os.path.isdir(self.IMAGE_OUPUT_DIRECTORY):
+            os.mkdir(self.IMAGE_OUPUT_DIRECTORY)
 
         configs = self.load_configs()
 
