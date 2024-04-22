@@ -50,7 +50,7 @@ class OresatLiveService(Service):
         self.state = State.BOOT
 
         # start mon0
-        subprocess.call(["startmonitor.sh"])
+        self.start_monitor()
 
         self.firmware_folder = "/lib/firmware/ath9k_htc"
         self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
@@ -67,6 +67,10 @@ class OresatLiveService(Service):
             configs["height"],
             self.IMAGE_OUPUT_DIRECTORY,
         )
+
+    def start_monitor(self):
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        subprocess.call([f"{cur_dir}/../transmission/startmonitor.sh"])
 
     def load_configs(self):
         """Loads the camera configs from the YAML file"""
@@ -122,7 +126,7 @@ class OresatLiveService(Service):
         subprocess.call(["rmmod", "ath9k_htc"])
         subprocess.call(["modprobe", "ath9k-htc"])
         time.sleep(2)
-        subprocess.call(["startmonitor.sh"])
+        self.start_monitor()
 
     def on_end(self) -> None:
         """Sets status state to OFF"""
