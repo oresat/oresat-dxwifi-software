@@ -49,9 +49,6 @@ class OresatLiveService(Service):
         super().__init__()
         self.state = State.BOOT
 
-        # start mon0
-        self.start_monitor()
-
         self.firmware_folder = "/lib/firmware/ath9k_htc"
         self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
         
@@ -67,6 +64,14 @@ class OresatLiveService(Service):
             configs["height"],
             self.IMAGE_OUPUT_DIRECTORY,
         )
+
+    def monitor_is_valid(self):
+        monitor_path = "/sys/class/net/mon0"
+        if os.path.isdir(monitor_path):
+            with open(os.path.join(monitor_path, "type")) as f:
+                if f.read() != "1":
+                    return True
+        return False
 
     def start_monitor(self):
         cur_dir = os.path.dirname(os.path.abspath(__file__))
@@ -168,6 +173,9 @@ class OresatLiveService(Service):
     def transmit(self) -> None:
         """Transmits all the images in the image output directory."""
         self.state = State.TRANSMISSION
+
+        if not self.monitor_is_valid():
+            self.start_monitor()
 
         files = os.listdir(self.IMAGE_OUPUT_DIRECTORY)
 
