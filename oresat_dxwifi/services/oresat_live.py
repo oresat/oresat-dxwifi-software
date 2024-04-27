@@ -69,7 +69,7 @@ class OresatLiveService(Service):
         monitor_path = "/sys/class/net/mon0"
         if os.path.isdir(monitor_path):
             with open(os.path.join(monitor_path, "type")) as f:
-                if f.read() != "1":
+                if f.read().strip() != "1":
                     return True
         return False
 
@@ -166,8 +166,14 @@ class OresatLiveService(Service):
     def transmit_file_test(self) -> None:
         """Transmits the static color bars image"""
         self.state = State.TRANSMISSION
+
+        if not self.monitor_is_valid():
+            self.start_monitor()
+
         cur_dir = os.path.dirname(os.path.realpath(__file__))
         self.transmit_file(os.path.join(cur_dir, "static/SMPTE_Color_Bars.gif"))
+
+        logger.info("Transmission complete.")
         self.state = State.STANDBY
 
     def transmit(self) -> None:
@@ -183,6 +189,7 @@ class OresatLiveService(Service):
             f = os.path.join(self.IMAGE_OUPUT_DIRECTORY, f)
             self.transmit_file(f)
 
+        logger.info("Transmission complete.")
         self.state = State.STANDBY
 
     def purge(self) -> None:
