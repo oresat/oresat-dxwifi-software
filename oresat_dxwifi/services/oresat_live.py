@@ -1,11 +1,14 @@
 """Oresat Live Camera Service"""
 
+import os
+import subprocess
+import time
 from enum import IntEnum
 from multiprocessing import Process
-import os, subprocess, time
 from yaml import safe_load
 
 from olaf import Service, logger
+
 from ..camera.interface import CameraInterface
 from ..transmission.transmission import Transmitter
 
@@ -51,11 +54,11 @@ class OresatLiveService(Service):
 
         self.firmware_folder = "/lib/firmware/ath9k_htc"
         self.firmware_file = os.path.join(self.firmware_folder, "htc_9271-1.dev.0.fw")
-        
+
         self.IMAGE_OUPUT_DIRECTORY = "/oresat-live-output/frames"
 
         if not os.path.isdir(self.IMAGE_OUPUT_DIRECTORY):
-            os.mkdir(self.IMAGE_OUPUT_DIRECTORY)
+            os.makedirs(self.IMAGE_OUPUT_DIRECTORY, exist_ok=True)
 
         configs = self.load_configs()
 
@@ -99,7 +102,7 @@ class OresatLiveService(Service):
             read_cb=self.on_state_read,
             write_cb=self.on_state_write,
         )
-        
+
         self.add_transmission_sdos()
 
     def add_transmission_sdos(self):
@@ -113,20 +116,21 @@ class OresatLiveService(Service):
     def get_bit_rate(self):
         """returns the given bit rate of the transmission"""
         fw_file = subprocess.check_output(["readlink", self.firmware_file]).decode('ascii')
-        return int(fw_file.split(".")[0])
-    
+        fw_file = os.path.basename(fw_file)
+        return int(fw_file.split(".")[0].strip())
+
     def update_bit_rate(self, value: int):
         """Update the bit rate (by way of firmware blobs) of the transmission"""
         valid_rates = [1, 2, 5, 11, 12, 18, 36, 48, 54]
 
         if value not in valid_rates:
-            logger.warn(f"Bit rate of {value} is not valid. Valid Values: {valid_rates}")
+            logger.warning(f"Bit rate of {value} is not valid. Valid Values: {valid_rates}")
             return
 
         if self.get_bit_rate() == value:
             logger.info(f"Bit rate is already set to {value}")
             return
-        
+
         subprocess.call(["ln", "-sf", f"{value}.fw", self.firmware_file])
         subprocess.call(["rmmod", "ath9k_htc"])
         subprocess.call(["modprobe", "ath9k-htc"])
