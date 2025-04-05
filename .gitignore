@@ -163,3 +163,7 @@ oresat-dxwifi-software-server-*
 
 # setuptools-scm
 _version.py
+
+# Generated file
+gen/
+*.dbc
