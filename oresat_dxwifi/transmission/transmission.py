@@ -1,6 +1,7 @@
-import os, subprocess, time
+import os
+
 from yaml import safe_load
-from olaf import logger
+
 from . import tx_module
 
 
@@ -22,8 +23,7 @@ class Transmitter:
     def load_configs(self) -> None:
         """Loads the transmission configs from the YAML file"""
         dirname = os.path.dirname(os.path.abspath(__file__))
-        tx_cfg_path = os.path.join(dirname, "configs",
-                                "transmission_configs.yaml")
+        tx_cfg_path = os.path.join(dirname, "configs", "transmission_configs.yaml")
 
         with open(tx_cfg_path, "r") as config_file:
             configs = safe_load(config_file)
@@ -143,7 +143,3 @@ class Transmitter:
 
     def transmit(self) -> None:
         tx_module.main_wrapper(self.configure_transmission())
-
-
-    
-

@@ -1,10 +1,10 @@
 from enum import IntEnum
 
-
 # These are the default values from oresat-libdxwifi's tx.c/cli.h/transmitter.h
 # Not all of them are being used in transmission.py, but they'll be necessary
 # to know if oresat-libdxwifi's python bindings are to be integrated at a
 # deeper level.
+
 
 class Tx_Mode(IntEnum):
     TX_TEXT_MODE = 0
@@ -20,7 +20,7 @@ class DAEMON_STATUS(IntEnum):
 
 
 class LOG_LEVEL(IntEnum):
-    DXWIFI_LOG_OFF = 0,
+    DXWIFI_LOG_OFF = (0,)
     DXWIFI_LOG_FATAL = 1
     DXWIFI_LOG_ERROR = 2
     DXWIFI_LOG_WARN = 3
@@ -42,7 +42,7 @@ class FCTL_TYPE(IntEnum):
     IEEE80211_FTYPE_MGMT = 0x00
     IEEE80211_FTYPE_CTL = 0x04
     IEEE80211_FTYPE_DATA = 0x08
-    IEEE80211_FTYPE_EXT = 0x0c
+    IEEE80211_FTYPE_EXT = 0x0C
 
 
 class IEEE80211_FCTL_DATA_STYPE(IntEnum):
@@ -64,7 +64,7 @@ class IEEE80211_FCTL_DATA_STYPE(IntEnum):
     IEEE80211_STYPE_QOS_CFACKPOLL = 0x00F0
 
 
-class FCTL():
+class FCTL:
     IEEE80211_PROTOCOL_VERSION = 0
     PROTOCOL_VERSION = IEEE80211_PROTOCOL_VERSION
     TYPE = FCTL_TYPE.IEEE80211_FTYPE_DATA
@@ -79,7 +79,7 @@ class FCTL():
     ORDER = False
 
 
-class TX():
+class TX:
     TRANSMIT_TIMEOUT = -1
     REDUNDANT_CTRL_FRAMES = 0
     ENABLE_PA = False
@@ -91,7 +91,7 @@ class TX():
     ADDRESS = DXWIFI_DFLT_SENDER_ADDR
 
 
-class TX_ARGS():
+class TX_ARGS:
     TX_MODE = Tx_Mode.TX_DIRECTORY_MODE
     DXWIFI_DAEMON_CMD = DAEMON_STATUS.DAEMON_UNKNOWN_CMD
     PID_FILE = "/run/oresat-dxwifi-txd.pid"

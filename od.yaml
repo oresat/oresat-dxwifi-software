@@ -3,7 +3,7 @@ nice_name: DxWiFi
 
 objects:
   - index: 0x4000
-    name: status
+    name: state
     data_type: uint8
     description: the dxwifi status
     access_type: rw
@@ -53,33 +53,37 @@ objects:
       - subindex: 0x4
         name: brightness
         data_type: uint16
-        description: brightness level of capture (0, 256)
+        description: brightness level of capture
         default: 192
+        high_limit: 256
 
       - subindex: 0x5
         name: contrast
         data_type: uint8
-        description: contrast level of capture (0, 64)
+        description: contrast level of capture
         default: 16
+        high_limit: 64
 
       - subindex: 0x6
         name: saturation
         data_type: uint8
-        description: saturation level of capture (0, 64)
+        description: saturation level of capture
         default: 48
+        high_limit: 64
 
       - subindex: 0x7
         name: hue
         data_type: uint8
-        description: hue level of capture (0, 64)
+        description: hue level of capture
         default: 0
+        high_limit: 64
 
       - subindex: 0x8
         name: gamma
         data_type: uint8
-        description: gamma level of capture (0, 9)
+        description: gamma level of capture
         default: 5
-
+        high_limit: 9
 
   - index: 0x4003
     name: transmission
@@ -94,9 +98,19 @@ objects:
       - subindex: 0x2
         name: bit_rate
         data_type: uint8
-        description: bit rate of transmission [1, 2, 5, 11, 12, 18, 36, 48, 54]
+        description: bit rate of transmission
         unit: Mbps
         default: 1
+        value_descriptions:
+          br_1: 1
+          br_2: 2
+          br_5: 5
+          br_11: 11
+          br_12: 12
+          br_18: 18
+          br_36: 36
+          br_48: 48
+          br_54: 54
 
       - subindex: 0x3
         name: as_tar
@@ -116,11 +130,10 @@ objects:
         description: enables the power amplifier
         default: false
 
-
 tpdos:
   - num: 3
     fields:
-      - [status]
+      - [state]
       - [radio, temperature]
       - [transmission, bit_rate]
       - [transmission, images_transmitted]

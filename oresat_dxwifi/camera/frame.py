@@ -1,7 +1,10 @@
-import os
 import datetime
+import logging
+import os
 import tarfile
-from olaf import logger
+
+logger = logging.getLogger(__name__)
+
 
 class Frame:
     def __init__(self, data):
@@ -9,13 +12,13 @@ class Frame:
         self.timestamp = datetime.datetime.utcnow().isoformat()
 
     def coerce_to_jpeg(self, data):
-        start = data.find(b'\xff\xd8')
-        end = data.find(b'\xff\xd9')
+        start = data.find(b"\xff\xd8")
+        end = data.find(b"\xff\xd9")
 
         if start != -1:
             data = data[start:]
         if end != -1:
-            data = data[:end+2]
+            data = data[: end + 2]
 
         return data
 
@@ -29,7 +32,7 @@ class Frame:
             tar.add(file, name, recursive=False)
         tar.close()
         os.remove(file)
-    
+
     def save(self, folder, tar=False):
         filename = f"camera-{self.timestamp}.jpeg"
 

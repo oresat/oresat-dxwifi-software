@@ -1,16 +1,24 @@
-from olaf import logger
-import time, os, shutil
-from v4l2py.device import VideoCapture, Device, PixelFormat
+import logging
+import os
+import shutil
+import time
+
+from v4l2py.device import Device, VideoCapture
+
 from .frame import Frame
+
+logger = logging.getLogger(__name__)
+
 
 class CameraInterfaceError(Exception):
     """An error has occured with the camera interface"""
 
+
 class CameraInterface:
     camera: Device
-    width:  int
+    width: int
     height: int
-    fps:    int
+    fps: int
     image_count: int
     delay: float
     output_dir: str
@@ -27,7 +35,7 @@ class CameraInterface:
         self.camera.controls["saturation"].value = val_dict["saturation"].value
         self.camera.controls["hue"].value = val_dict["hue"].value
         self.camera.controls["gamma"].value = val_dict["gamma"].value
-            
+
     def ready_capture(self):
         capture = VideoCapture(self.camera)
         capture.set_format(self.width, self.height)
@@ -43,16 +51,15 @@ class CameraInterface:
                 if image_num >= image_count:
                     break
 
-                if time.time() - prev > 1/fps:
+                if time.time() - prev > 1 / fps:
                     prev = time.time()
                     frames.append(Frame(frame.data))
-                    logger.info(f"Captured image {image_num+1} of {image_count}")
-                
-                
+                    logger.info(f"Captured image {image_num + 1} of {image_count}")
+
         logger.info("Capture complete.")
         return frames
-    
-    def save_frames(self, frames: [Frame]):
+
+    def save_frames(self, frames: list[Frame]):
         for frame in frames:
             frame.save(self.output_dir, self.tar_file)
 
@@ -80,17 +87,14 @@ class CameraInterface:
             self.clean_dir(self.output_dir)
         except Exception as e:
             raise CameraInterfaceError(e)
-        
+
         logger.info("Starting capture...")
         self.camera.open()
         self.update_settings(obj_dict)
         self.tar_file = as_tar
         self.ready_capture()
-        frames = self.capture_frames(obj_dict["image_amount"].value, obj_dict["delay"].value, obj_dict["fps"].value)
+        frames = self.capture_frames(
+            obj_dict["image_amount"].value, obj_dict["delay"].value, obj_dict["fps"].value
+        )
         self.save_frames(frames)
         self.camera.close()
-        
-
-    
-        
-
