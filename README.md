@@ -82,20 +82,6 @@ Install the debian packages created from the libdxwifi instructions
 sudo dpkg -i *.deb
 ```
 
-## Build oresat_configs
-Clone Repository
-```bash
-cd /home/debian/src && \
-git clone https://github.com/oresat/oresat-configs
-```
-Install requirements
-```bash
-cd oresat-configs && \
-sudo pip install -r requirements.txt
-sudo ./build_and_install.sh
-```
-
-
 ## Build and install Oresat DxWiFi Software (OLAF app) Package
 Install requirements
 ```bash
